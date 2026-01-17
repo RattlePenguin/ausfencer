@@ -8,4 +8,13 @@ int main() {
 	std::cout << "Type 3 to create a standard tournament (pools + DEs)" << '\n';
 }
 
+Event createEvent() {
+	// let's mock an Event
+	// create one bout
+	// Needs two players
+	// Initial score 0:0
+	//
+	
 
+	return newEvent;
+}
