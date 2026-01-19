@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "joTwjmUlzTE=",
+  "success": true,
+  "projectFilePath": "/home/viggo/projects/FencingTracker.Api/FencingTracker.Api.csproj",
+  "expectedPackageFiles": [
+    "/home/viggo/.nuget/packages/microsoft.aspnetcore.openapi/10.0.0/microsoft.aspnetcore.openapi.10.0.0.nupkg.sha512",
+    "/home/viggo/.nuget/packages/microsoft.openapi/2.0.0/microsoft.openapi.2.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
