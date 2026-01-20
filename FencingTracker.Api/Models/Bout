@@ -1,0 +1,10 @@
+namespace FencingTracker.Api.Models;
+
+class Bout {
+	private Fencer leftFencer;
+	private Fencer rightFencer;
+	private int leftScore;
+	private int rightScore;
+
+
+}
