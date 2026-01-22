@@ -7,7 +7,7 @@ namespace FencingTracker.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BoutController : ControllerBase {
+public class BoutsController : ControllerBase {
 	[HttpPost]
 	public ActionResult<Bout> CreateBout([FromBody] Bout bout) {
 		var created = BoutStore.Create(bout);
