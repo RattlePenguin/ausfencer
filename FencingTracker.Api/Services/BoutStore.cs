@@ -23,6 +23,7 @@ public static class BoutStore {
 		if (!_bouts.ContainsKey(id)) {
 			return false;
 		}
+		updatedBout.Id = id;
 		_bouts[id] = updatedBout;
 		return true;
 	}
