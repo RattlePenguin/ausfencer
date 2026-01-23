@@ -23,9 +23,10 @@ if (app.Environment.IsDevelopment())
 	app.MapScalarApiReference();
 }
 
-app.MapControllers();
-
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+app.MapControllers();
 
 var summaries = new[]
 {
