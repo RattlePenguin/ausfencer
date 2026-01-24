@@ -4,10 +4,29 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>Fencing Bout</title>
+	<link href="css/style.css" rel="stylesheet">
 </head>
 
 <body>
 	<div id="app">
 		<h1 id="timer">3:00</h1>
+
+		<div class="scores">
+			<div class="side">
+				<h2 id="leftName">Left</h2>
+				<div class="score" id="leftScore">0</div>
+				<button type="button" onclick="changeScore('left', 1)">+</button>
+				<button type="button" onclick="changeScore('left', -1)">-</button>
+			</div>
+
+			<div class="side">
+				<h2 id="rightName">Right</h2>
+				<div class="score" id="rightScore">0</div>
+				<button type="button" onclick="changeScore('right', 1)">+</button>
+				<button type="button" onclick="changeScore('right', -1)">-</button>
+			</div>
+			
+		</div>
 	</div>
 </body>
+
