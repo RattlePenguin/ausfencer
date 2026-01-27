@@ -25,7 +25,10 @@ public class BoutsController : ControllerBase {
 
 	[HttpPut("{id}")]
 	public IActionResult UpdateBout(Guid id, [FromBody] Bout bout) {
-		if (bout.Status == BoutStatus.Finished) {
+		var oldBout = BoutStore.Get(id);
+		if (oldBout == null) {
+			return BadRequest("Bout id does not exist.");
+		} else if (oldBout.Status == BoutStatus.Finished) {
 			return BadRequest("Cannot update a finished bout.");
 		}
 		
