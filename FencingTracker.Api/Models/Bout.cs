@@ -11,7 +11,7 @@ public class Bout {
 	public int LeftScore { get; set; }
 	public int RightScore { get; set; }
 
-	public int TimeRemaining { get; set; } = 180;
+	public int TimeRemainingSeconds { get; set; } = 180;
 	public bool TimeRunning { get; set; }
 	
 	public int LeftYellowCards { get; set; }
