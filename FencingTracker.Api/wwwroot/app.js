@@ -10,9 +10,8 @@ async function createBout() {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({
-			leftFencerName: 'Allan',
-			rightFencerName: 'Bob',
-			leftScore: 2,
+			leftFencerName: 'Antoine',
+			rightFencerName: 'Ben',
 			weapon: 'Sabre'
 		})
 	});
