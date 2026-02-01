@@ -2,12 +2,20 @@ using Microsoft.AspNetCore.Mvc;
 
 using FencingTracker.Api.Models;
 using FencingTracker.Api.Services;
+using FencingTracker.Api.Data;
 
 namespace FencingTracker.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 public class BoutsController : ControllerBase {
+	// Inject DB context
+	private readonly AppDbContext _db;
+
+	public BoutsController(AppDbContext db) {
+		_db = db;
+	}
+
 	[HttpPost]
 	public ActionResult<Bout> CreateBout([FromBody] Bout bout) {
 		var created = BoutStore.Create(bout);
