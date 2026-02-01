@@ -17,7 +17,12 @@ public class BoutsController : ControllerBase {
 	}
 
 	[HttpPost]
-	public ActionResult<Bout> CreateBout([FromBody] Bout bout) {
+	public async Task<ActionResult<Bout>> CreateBout([FromBody] Bout bout) {
+		// Persistent storage
+		_db.Bouts.Add(bout);
+		await _db.SaveChangesAsync();
+		
+		// Local storage
 		var created = BoutStore.Create(bout);
 		return CreatedAtAction(nameof(GetBout), new { id = created.Id }, created);
 	}
