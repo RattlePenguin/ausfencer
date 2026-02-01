@@ -1,4 +1,7 @@
 using Scalar.AspNetCore;
+using Microsoft.EntityFrameworkCore;
+
+using FencingTracker.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +16,10 @@ builder.Services.AddControllers()
 			new System.Text.Json.Serialization.JsonStringEnumConverter()
 		);
 	});
+
+// Add database
+builder.Services.AddDbContext<AppDbContext>(options =>
+	options.UseSqlite("Data Source=fencing.db"));
 
 var app = builder.Build();
 
