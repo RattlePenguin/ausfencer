@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 using FencingTracker.Api.Models;
-using FencingTracker.Api.Services;
 using FencingTracker.Api.Data;
 
 namespace FencingTracker.Api.Controllers;
@@ -16,39 +16,57 @@ public class BoutsController : ControllerBase {
 		_db = db;
 	}
 
+	/**
+	 *  Creates a Bout instance from the request body.
+	 *  Bout is added to db and local BoutStore.
+	 */
 	[HttpPost]
 	public async Task<ActionResult<Bout>> CreateBout([FromBody] Bout bout) {
 		// Persistent storage
 		_db.Bouts.Add(bout);
 		await _db.SaveChangesAsync();
 		
-		// Local storage
-		var created = BoutStore.Create(bout);
-		return CreatedAtAction(nameof(GetBout), new { id = created.Id }, created);
+		return CreatedAtAction(nameof(GetBout), new { id = bout.Id }, bout);
 	}
 
+	/**
+	 *  Returns a list of all bouts.
+	 */
+	[HttpGet]
+	public async Task<ActionResult<IEnumerable<Bout>>> GetBouts() {
+		return await _db.Bouts.ToListAsync();
+	}
+
+	/**
+	 *  Returns a bout with a given id.
+	 */
 	[HttpGet("{id}")]
-	public ActionResult<Bout> GetBout(Guid id) {
-		var bout = BoutStore.Get(id);
+	public async Task<ActionResult<Bout>> GetBout(Guid id) {
+		var bout = await _db.Bouts.FindAsync(id);
 		if (bout == null) {
 			return NotFound();
 		}
 		return Ok(bout);
 	}
 
+	/**
+	 *  Update a bout with a given id.
+	 */
 	[HttpPut("{id}")]
-	public IActionResult UpdateBout(Guid id, [FromBody] Bout bout) {
-		var oldBout = BoutStore.Get(id);
-		if (oldBout == null) {
-			return BadRequest("Bout id does not exist.");
-		} else if (oldBout.Status == BoutStatus.Finished) {
-			return BadRequest("Cannot update a finished bout.");
-		}
-		
-		var updated = BoutStore.Update(id, bout);
-		if (!updated) {
+	public async Task<IActionResult> UpdateBout(Guid id, [FromBody] Bout updated) {
+		var bout = await _db.Bouts.FindAsync(id);
+
+		if (bout == null) {
 			return NotFound();
 		}
+		
+		bout.LeftScore = updated.LeftScore;
+		bout.RightScore = updated.RightScore;
+		bout.TimeRemainingSeconds = updated.TimeRemainingSeconds;
+		bout.Status = updated.Status;
+
+		await _db.SaveChangesAsync();
+
 		return NoContent();
 	}
 }

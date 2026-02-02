@@ -3,6 +3,9 @@ using FencingTracker.Api.Models;
 
 namespace FencingTracker.Api.Data;
 
+/**
+ *  Define the context class and entity classes that make up the model.
+ */
 public class AppDbContext : DbContext {
 	public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) {}
 
