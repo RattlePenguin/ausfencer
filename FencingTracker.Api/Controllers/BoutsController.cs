@@ -33,7 +33,7 @@ public class BoutsController : ControllerBase {
 	 *  Returns a list of all bouts.
 	 */
 	[HttpGet]
-	public async Task<ActionResult<IEnumerable<Bout>>> GetBouts() {
+	public async Task<ActionResult<IEnumerable<Bout>>> GetAllBouts() {
 		return await _db.Bouts.ToListAsync();
 	}
 
