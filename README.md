@@ -7,4 +7,6 @@ cd FencingTracker.Api
 dotnet run
 ```
 
-Navigate to endpoint `/scalar` to open the Scalar UI for information.
+Navigate to endpoint `/scalar` to open the Scalar UI for information and testing.
+
+Nagivate to endpoint `/index.html` to access the referee tool.
