@@ -18,6 +18,7 @@ builder.Services.AddControllers()
 	});
 
 // Add database
+// This is a dependency injection, telling DbContext to use SQLite and which data source.
 builder.Services.AddDbContext<AppDbContext>(options =>
 	options.UseSqlite("Data Source=fencing.db"));
 
