@@ -1,5 +1,5 @@
 # Fencing Tracker and Referee UI
-Fencing tournament / session hosting and tracking service. Fencing Referee UI designed for use on mobile devices. Currently has to be self-hosted though, working on deployment in the future.
+Fencing tournament / session hosting and tracking service. Fencing Referee UI designed for use on mobile devices. Currently has to be self-hosted, working on deployment in the future.
 
 # Features
 ### Core Features
