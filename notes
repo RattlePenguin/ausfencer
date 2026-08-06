@@ -1,0 +1,238 @@
+> I currently don't understand enough of what you wrote to be able to do this myself. Teach me from the ground up,
+  starting with what should be written first, with reasons and explanations.
+
+▸ Thought Process
+  Initiating Fundamental Instruction
+  Let's build your understanding from the absolute ground up, step by step, in the exact logical order a software
+  engineer builds a project like this.
+  ──────
+   Lesson 1: The Building Order of a C++ Web Application
+  When creating a C++ web application, you construct your project in 5 logical steps:
+
+    [ Step 1: Data Models ]   --> Define what a "Bout" is in C++ (names, scores, timer).
+              │
+    [ Step 2: Database ]      --> Write C++ code to save/read Bouts to/from SQLite disk storage.
+              │
+    [ Step 3: API & Server ]  --> Create network URL endpoints (/api/bouts) using Crow.
+              │
+    [ Step 4: CMake Build ]   --> Write the CMake script to fetch libraries and compile everything.
+              │
+    [ Step 5: Web Frontend ]  --> Build the mobile web page (HTML/JS) that calls your C++ server.
+    ──────
+  ## Step 1: The Blueprint (Data Models & Enums)
+
+  ### Why do we write this first?
+  Before you build a database or write web server routes, you must define what data your application works with.
+  Without defining what a Bout is, your database doesn't know what columns to create, and your web server doesn't
+  know what JSON data to send or receive!
+  ### What goes into the files?
+
+  In C++, we split models into clean header files (.hpp):
+  #### 1. Enums (weapon.hpp and bout_status.hpp)
+  In fencing, a weapon can only be Foil, Epee, or Sabre. In C++, we use an enum class to strictly enforce valid
+  options:
+
+    // src/models/weapon.hpp
+    #pragma once  // Ensures this file is included only once during compilation
+
+    enum class Weapon {
+        Foil,
+        Epee,
+        Sabre
+    };
+
+  Because web browsers talk in text ("Foil"), we write a small conversion helper so C++ can convert between string
+  text and the C++ Weapon enum:
+    inline std::string weaponToString(Weapon w) {
+        if (w == Weapon::Foil) return "Foil";
+        if (w == Weapon::Epee) return "Epee";
+        return "Sabre";
+    }
+
+  #### 2. The Main Model Struct (bout.hpp)
+  A struct in C++ is a container that holds variables representing a single bout:
+    // src/models/bout.hpp
+    #pragma once
+    #include <string>
+    #include "weapon.hpp"
+    #include "bout_status.hpp"
+
+    struct Bout {
+        std::string id;              // Unique ID (UUID) e.g., "0ecf34f6-..."
+        std::string leftFencerName;  // e.g., "Antoine"
+        std::string rightFencerName; // e.g., "Ben"
+
+        int leftScore = 0;           // Points scored by left fencer
+        int rightScore = 0;          // Points scored by right fencer
+
+        int timeRemainingSeconds = 180; // 3 minutes = 180 seconds
+        bool timeRunning = false;
+
+        Weapon weapon = Weapon::Foil;
+        BoutStatus status = BoutStatus::NotStarted;
+    };
+    ──────
+  ## Step 2: The Storage (Database Manager)
+
+  ### Why do we write this second?
+
+  Now that C++ understands what a Bout object looks like in memory, we need a way to persist it to disk so that when
+  the server restarts or a phone disconnects, data isn't lost.
+
+  ### How C++ files work: Headers (.hpp) vs Source (.cpp)
+
+  In C++, we divide code into two files:
+
+  • Header (.hpp): The interface/contract. It lists function names and class declarations, but no heavy
+  implementation code.
+  • Source (.cpp): The implementation. It contains the actual C++ logic and database queries.
+
+  #### 1. The Header Contract (db_manager.hpp)
+
+    // src/db/db_manager.hpp
+    #pragma once
+    #include <sqlite3.h>
+    #include <vector>
+    #include <mutex>
+    #include "../models/bout.hpp"
+
+    class DbManager {
+    public:
+        explicit DbManager(const std::string& dbPath = "fencing.db");
+        ~DbManager(); // Destructor: closes database when app stops
+
+        bool init(); // Creates SQLite database & tables
+
+        // CRUD Methods
+        bool createBout(Bout& bout);
+        std::vector<Bout> getAllBouts();
+        bool updateBout(const std::string& id, const Bout& updated);
+
+    private:
+        sqlite3* db_ = nullptr; // SQLite database handle
+        std::mutex dbMutex_;    // Prevents multi-thread crashes when 2 phones save at once
+    };
+
+  #### 2. The Implementation (db_manager.cpp)
+
+  Inside db_manager.cpp, we execute SQL commands using the SQLite C-API:
+
+    // Inside DbManager::init()
+    // Create SQLite table matching our Bout struct
+    const char* sql = R"(
+        CREATE TABLE IF NOT EXISTS bouts (
+            id TEXT PRIMARY KEY,
+            left_fencer_name TEXT NOT NULL,
+            right_fencer_name TEXT NOT NULL,
+            left_score INTEGER NOT NULL,
+            right_score INTEGER NOT NULL,
+            time_remaining_seconds INTEGER NOT NULL,
+            weapon TEXT NOT NULL,
+            status TEXT NOT NULL
+        );
+    )";
+    sqlite3_exec(db_, sql, nullptr, nullptr, nullptr);
+    ──────
+  ## Step 3: The API Routes & Server
+
+  ### Why do we write this third?
+
+  We now have Data Models (Step 1) and Database Storage (Step 2). Now we need a network interface so mobile phones
+  can interact with them over Wi-Fi.
+
+  ### How Crow Works
+
+  Crow is a C++ web server library. You define routes (URL endpoints) that respond to HTTP requests sent by mobile
+  browsers.
+
+    // src/api/bouts_controller.hpp
+    #pragma once
+    #include <crow.h>
+    #include "../db/db_manager.hpp"
+
+    inline void registerBoutsRoutes(crow::SimpleApp& app, DbManager& db) {
+
+        // When a phone sends a GET request to http://server:5000/api/bouts
+        CROW_ROUTE(app, "/api/bouts").methods(crow::HTTPMethod::Get)([&db]() {
+            std::vector<Bout> bouts = db.getAllBouts(); // 1. Read from SQLite
+            nlohmann::json resJson = bouts;             // 2. Convert C++ structs to JSON
+            return crow::response(200, resJson.dump()); // 3. Send JSON back to phone
+        });
+
+        // When a phone sends a POST request to create a new bout
+        CROW_ROUTE(app, "/api/bouts").methods(crow::HTTPMethod::Post)([&db](const crow::request& req) {
+            auto bodyJson = nlohmann::json::parse(req.body); // 1. Read JSON from phone
+            Bout newBout = bodyJson.get<Bout>();              // 2. Convert JSON to C++ Bout struct
+            db.createBout(newBout);                           // 3. Save to SQLite database
+            return crow::response(201, nlohmann::json(newBout).dump());
+        });
+    }
+    ──────
+  ## Step 4: The Build Script (CMakeLists.txt)
+
+  ### What is CMake and why do we need it?
+
+  Unlike languages like Python or JavaScript which execute text directly, C++ must be compiled into binary machine
+  code (fencing_tracker).
+
+  CMakeLists.txt is a script that instructs cmake:
+
+  1. What compiler settings to use (C++20).
+  2. What external libraries to download (Crow, nlohmann/json, Asio).
+  3. Which .cpp files to compile into the final executable binary.
+
+    # CMakeLists.txt
+    cmake_minimum_required(VERSION 3.20)
+    project(FencingTracker VERSION 1.0.0 LANGUAGES CXX C)
+
+    set(CMAKE_CXX_STANDARD 20) # Use C++20 standard
+
+    include(FetchContent)
+
+    # 1. Automatically download JSON library
+    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+    FetchContent_MakeAvailable(json)
+
+    # 2. Automatically download Crow Web Framework
+    FetchContent_Declare(Crow GIT_REPOSITORY https://github.com/CrowCpp/Crow.git GIT_TAG v1.2.0)
+    FetchContent_MakeAvailable(Crow)
+
+    # 3. Tell CMake to compile our main.cpp and db_manager.cpp into an executable executable
+    add_executable(fencing_tracker src/main.cpp src/db/db_manager.cpp)
+
+    # 4. Link SQLite3 library and Crow framework to our executable
+    target_link_libraries(fencing_tracker PRIVATE Crow::Crow nlohmann_json::nlohmann_json SQLite3::SQLite3 pthread)
+    ──────
+  ## Step 5: The Web Frontend (wwwroot/)
+
+  ### How the Mobile Phone Talks to C++
+
+  1. A referee opens http://<server-ip>:5000 on their phone.
+  2. The C++ server sends index.html and app.js to the browser.
+  3. When the referee taps "+1 Point" on their screen:
+      • JavaScript updates the score instantly on the screen (0 delay).
+      • In the background, app.js runs:
+        fetch('/api/bouts/' + bout.id, {
+	    method: 'PUT',
+	    headers: { 'Content-Type': 'application/json' },
+	    body: JSON.stringify(bout)
+	});
+
+      • The C++ Crow server receives this HTTP PUT request and saves the updated score to SQLite!
+
+  ──────
+  ### Key Recap Quiz for Understanding
+
+  1. Why do we write Data Models first?
+  Because both the database and the web server endpoints need to know what fields a Bout contains (scores, names,
+  timer) before they can save or transmit it.
+  2. Why do we use CMake FetchContent?
+  So you don't have to manually download, unzip, and install Crow or nlohmann_json onto your operating system—CMake
+  downloads them automatically into the project build folder.
+  3. Why do we run timer ticks locally on the phone's JavaScript instead of sending a server request every 1 second?
+  Because network Wi-Fi can lag. Running the timer in JavaScript guarantees smooth 1-second ticks on the phone, while
+  periodically syncing results to the C++ server.
+
+  How does this breakdown feel? Which step would you like to explore or try writing line-by-line together first?
+
+
