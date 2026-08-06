@@ -1,0 +1,18 @@
+first make a way to add bouts to a database
+forget fencers, just put name
+
+
+Bout:
+leftFencerName: string
+rightFencerName: string
+weapon: enum (0 1 2)
+leftScore: 0-99
+rightScore: 0-99
+
+leftYellow: 0-1
+rightYellow: 0-1
+
+leftReds: 0-99
+rightReds: 0-99
+
+db.add(Bout)
