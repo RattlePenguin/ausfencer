@@ -4,7 +4,7 @@
 class DbManager {
   DbManager(std::string dbName) {
     sqlite3 *db;
-    sqlite3_open(dbName, &db);
+    sqlite3_open()
   }
   ~DbManager() {}
 };
