@@ -11,7 +11,7 @@ find_package(SQLite3 REQUIRED)
 FetchContent_Declare(
   sqlite_orm
   GIT_REPOSITORY https://github.com/fnc12/sqlite_orm.git
-  GIT_TAG        v1.9
+  GIT_TAG        5f1a2ce84a3d72711b4f0a440fdaba977868ae67
 )
 FetchContent_MakeAvailable(sqlite_orm)
 
