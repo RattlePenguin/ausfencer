@@ -11,3 +11,6 @@
 ## Usage
 
 ## Installation
+
+sqlite 3 installed in libs
+sqliteOrm via fetchcontent
