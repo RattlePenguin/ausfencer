@@ -1,5 +1,6 @@
-#include <iostream>
 #include <sqlite3.h>
+
+#include "../bout.hpp"
 
 class DbManager {
   DbManager(char *dbName) {
