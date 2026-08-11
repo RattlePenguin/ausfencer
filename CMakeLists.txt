@@ -5,7 +5,13 @@ set(CMAKE_CXX_STANDARD 17)
 
 include(FetchContent)
 
-find_package(Crow REQUIRED)
+FetchContent_Declare(
+  crow 
+  GIT_REPOSITORY https://github.com/CrowCpp/Crow.git
+  GIT_TAG        7375d3dc1ffb8719778cdb29fb1c73141ce684e8
+)
+FetchContent_MakeAvailable(crow)
+
 find_package(SQLite3 REQUIRED)
 
 FetchContent_Declare(
