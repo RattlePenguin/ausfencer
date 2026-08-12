@@ -5,13 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 include(FetchContent)
 
-FetchContent_Declare(
-  crow
-  GIT_REPOSITORY https://github.com/CrowCpp/Crow.git
-  GIT_TAG        7375d3dc1ffb8719778cdb29fb1c73141ce684e8
-)
-FetchContent_MakeAvailable(crow)
-
+find_package(Crow REQUIRED)
+find_package(Boost REQUIRED)
 find_package(SQLite3 REQUIRED)
 
 FetchContent_Declare(
@@ -30,8 +25,11 @@ FetchContent_MakeAvailable(gtest)
 
 add_executable(${PROJECT_NAME} src/crowapp.cpp)
 
-target_link_libraries(my_app PRIVATE
+target_link_libraries(${PROJECT_NAME} PRIVATE
   Crow::Crow
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE
+  ${PROJECT_SOURCE_DIR}/include
+  ${Boost_INCLUDE_DIRS}
+)

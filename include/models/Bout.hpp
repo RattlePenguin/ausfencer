@@ -2,12 +2,14 @@
 
 #include "Fencer.hpp"
 
+enum Weapon { Foil, Epee, Sabre };
+
 struct Bout {
   int id;
   Fencer left_fencer;
   Fencer right_fencer;
 
-  int weapon;
+  Weapon weapon;
   int time;
 
   int left_score;
