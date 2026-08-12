@@ -1,3 +1,9 @@
+#pragma once
+
+#include "middleware/logger.hpp"
+#include <crow.h>
+#include <crow/app.h>
+#include <crow/middlewares/cors.h>
 #include <cstdint>
 
 struct ServerConfig {
@@ -5,13 +11,15 @@ struct ServerConfig {
   uint16_t threads{2};
 };
 
+using App = crow::App<crow::CORSHandler, LoggerMiddleware>;
+
 class Server {
   ServerConfig config_;
 
   bool is_running_{false};
 
 public:
-  explicit Server(const ServerConfig &config = ServerConfig()) {}
+  explicit Server(const ServerConfig &config = ServerConfig());
   ~Server() = default;
 
   void setup();
