@@ -5,6 +5,7 @@
 #include <crow/app.h>
 #include <crow/middlewares/cors.h>
 #include <cstdint>
+#include <memory>
 
 struct ServerConfig {
   uint16_t port{8080};
@@ -15,6 +16,7 @@ using App = crow::App<crow::CORSHandler, LoggerMiddleware>;
 
 class Server {
   ServerConfig config_;
+  std::unique_ptr<App> app_;
 
   bool is_running_{false};
 
