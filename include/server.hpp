@@ -28,5 +28,5 @@ public:
 
   void setup();
   void start();
-  void addHandler(std::shared_ptr<IHandler>);
+  void addHandler(std::shared_ptr<IHandler> handler);
 };

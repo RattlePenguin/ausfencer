@@ -1,4 +1,5 @@
 #include "server.hpp"
+#include "handlers/interface.hpp"
 #include <crow/logging.h>
 #include <crow/middlewares/cors.h>
 #include <memory>
@@ -29,4 +30,8 @@ void Server::start() {
   this->setup();
   std::cout << "Server started on port " << config_.port << std::endl;
   app_->port(config_.port).multithreaded().run(); // default run command
+}
+
+void Server::addHandler(std::shared_ptr<IHandler> handler) {
+  handlers_.push_back(handler);
 }
