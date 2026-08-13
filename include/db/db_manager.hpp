@@ -1,19 +1,20 @@
+#include <mutex>
+#include <shared_mutex>
 #include <sqlite3.h>
 
-#include "../bout.hpp"
+#include "../models/Fencer.hpp"
 
 class DbManager {
-  DbManager(const std::string &dbName) { auto storage{createStorage(dbName)}; }
-  ~DbManager() {}
+  std::string db_name_;
+  sqlite3 *db_;
 
-  inline auto createStorage(const std::string &filename) {
-    return sqlite_orm::make_storage(
-        dbName,
-        sqlite_orm::make_table("fencers",
-                               sqlite_orm::make_column(
-                                   "id", &Fencer::id, sqlite_orm::primary_key(),
-                                   sqlite_orm::auto_increment()),
-                               sqlite_orm::make_column("name", &Fencer::name),
-                               sqlite_orm::make_column("age", &Fencer::age)));
-  }
+  // Expose shared lock to repositories that want to read
+  std::shared_lock<std::shared_mutex> acquire_read_lock() const;
+
+  // Unique lock for writes
+  std::unique_lock<std::shared_mutex> acquire_write_lock() const;
+
+public:
+  explicit DbManager(const std::string &db_name);
+  ~DbManager();
 };

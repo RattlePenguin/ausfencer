@@ -18,7 +18,7 @@ using App = crow::App<crow::CORSHandler, LoggerMiddleware>;
 class Server {
   ServerConfig config_;
   std::unique_ptr<App> app_;
-  std::unique_ptr<DbManager> db_;
+  std::unique_ptr<DbManager> db_mgr_;
   std::vector<std::shared_ptr<IHandler>> handlers_;
 
   bool is_running_{false};
