@@ -33,7 +33,6 @@ add_executable(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
   Crow::Crow
-  Sqlite3::Sqlite3
   sqlite_orm::sqlite_orm
 )
 
