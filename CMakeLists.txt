@@ -24,10 +24,17 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(gtest)
 
-add_executable(${PROJECT_NAME} src/main.cpp src/server.cpp)
+add_executable(${PROJECT_NAME}
+  src/main.cpp
+  src/server.cpp
+  src/handlers/base.cpp
+  src/handlers/fencers.cpp
+)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
   Crow::Crow
+  Sqlite3::Sqlite3
+  sqlite_orm::sqlite_orm
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

@@ -23,14 +23,11 @@ Server::Server(const ServerConfig &config) : config_{config} {
 }
 
 void Server::setup() {
-  // add handlers for each route here
+  // add handlers for each type here
   // referee : POST
-  // fencers : GET, POST
-  // fencers/id : GET, DELETE
-  // bouts : GET, POST
-  // bouts/id : GET, DELETE
-  // tournaments : GET, POST
-  // tournaments/id
+  // fencers : CRUD
+  // bouts : CRUD
+  // tournaments : CRUD
 };
 
 void Server::start() {
@@ -39,6 +36,6 @@ void Server::start() {
   app_->port(config_.port).multithreaded().run(); // default run command
 }
 
-void Server::addHandler(std::shared_ptr<IHandler> handler) {
+void Server::add_handler(std::shared_ptr<IHandler> handler) {
   handlers_.push_back(handler);
 }
