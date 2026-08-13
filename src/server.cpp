@@ -24,6 +24,13 @@ Server::Server(const ServerConfig &config) : config_{config} {
 
 void Server::setup() {
   // add handlers for each route here
+  // referee : POST
+  // fencers : GET, POST
+  // fencers/id : GET, DELETE
+  // bouts : GET, POST
+  // bouts/id : GET, DELETE
+  // tournaments : GET, POST
+  // tournaments/id
 };
 
 void Server::start() {
