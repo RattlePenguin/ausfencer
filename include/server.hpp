@@ -1,5 +1,6 @@
 #pragma once
 
+#include "db/db_manager.hpp"
 #include "middleware/logger.hpp"
 #include <crow.h>
 #include <crow/app.h>
