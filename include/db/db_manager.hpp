@@ -25,19 +25,23 @@ inline auto create_db_storage(const std::string &db_name) {
                       sql::make_column("birth_year", &Fencer::birth_year)));
 }
 
-#include "../models/Fencer.hpp"
+using Storage = decltype(create_db_storage(""));
 
 class DbManager {
   std::string db_name_;
-  sqlite3 *db_;
+  Storage storage_;
+  mutable std::mutex mutex_;
 
-  // Expose shared lock to repositories that want to read
-  std::shared_lock<std::shared_mutex> acquire_read_lock() const;
+  Storage &get_storage() { return storage_; }
 
-  // Unique lock for writes
-  std::unique_lock<std::shared_mutex> acquire_write_lock() const;
+  // Acquires the mutex lock on db mgr.
+  // locking the mutex is a mutating operation,
+  // so mutex must be made mutable if db mgr is const
+  std::unique_lock<std::mutex> acquire_lock() const {
+    return std::unique_lock<std::mutex>(mutex_);
+  }
 
 public:
   explicit DbManager(const std::string &db_name);
-  ~DbManager();
+  ~DbManager() = default;
 };
