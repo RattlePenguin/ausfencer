@@ -32,6 +32,10 @@ class DbManager {
   Storage storage_;
   mutable std::mutex mutex_;
 
+public:
+  explicit DbManager(const std::string &db_name);
+  ~DbManager() = default;
+
   Storage &get_storage() { return storage_; }
 
   // Acquires the mutex lock on db mgr.
@@ -40,8 +44,4 @@ class DbManager {
   std::unique_lock<std::mutex> acquire_lock() const {
     return std::unique_lock<std::mutex>(mutex_);
   }
-
-public:
-  explicit DbManager(const std::string &db_name);
-  ~DbManager() = default;
 };
