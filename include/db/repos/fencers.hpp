@@ -5,14 +5,22 @@
 #include <vector>
 
 class FencersRepo : public BaseRepo {
+public:
+  explicit FencersRepo(DbManager &db_mgr);
+
   // Creates a new data entry with the given Fencer, returns its primary id
   // Primary id is autoincremented with each entry
   int create(const Fencer &fencer);
-  std::unique_ptr<Fencer> get(int id);
-  void update(const Fencer &fencer);
-  void remove(int id);
-  std::vector<Fencer> get_all();
 
-public:
-  explicit FencersRepo(DbManager &db_mgr);
+  // Getter for Fencer with id
+  std::unique_ptr<Fencer> get(int id);
+
+  // Updates Fencer, id is taken from the Fencer object itself
+  void update(const Fencer &fencer);
+
+  // Removes Fencer with given id
+  void remove(int id);
+
+  // Returns a list of all fencers
+  std::vector<Fencer> get_all();
 };
