@@ -1,14 +1,11 @@
 #pragma once
 
-#include "../models/Fencer.hpp"
 #include "base.hpp"
+#include "db/repos/fencers.hpp"
 #include "interface.hpp"
-#include <unordered_map>
 
 class FencerHandler : public BaseHandler {
-  std::unordered_map<int, Fencer> fencers_;
-  int lastID_;
-  std::mutex mutex_;
+  std::shared_ptr<FencerRepo> repo_;
 
   crow::response list(const crow::request &req);
   crow::response get(int id);

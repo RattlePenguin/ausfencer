@@ -4,9 +4,9 @@
 #include <memory>
 #include <vector>
 
-class FencersRepo : public BaseRepo {
+class FencerRepo : public BaseRepo {
 public:
-  explicit FencersRepo(DbManager &db_mgr);
+  explicit FencerRepo(DbManager &db_mgr);
 
   // Creates a new data entry with the given Fencer, returns its primary id
   // Primary id is autoincremented with each entry

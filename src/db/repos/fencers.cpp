@@ -4,33 +4,33 @@
 #include "models/Fencer.hpp"
 #include <memory>
 
-FencersRepo::FencersRepo(DbManager &db_mgr) : BaseRepo(db_mgr) {
-  this->name_ = "FencersRepo";
+FencerRepo::FencerRepo(DbManager &db_mgr) : BaseRepo(db_mgr) {
+  this->name_ = "FencerRepo";
 }
 
-int FencersRepo::create(const Fencer &fencer) {
+int FencerRepo::create(const Fencer &fencer) {
   // use db_mgr to add Fencer entry
   // TODO confirm: storage_.insert returns autoincremented primary id, Fencer.id
   auto lock = db_mgr_.acquire_lock();
   return db_mgr_.get_storage().insert(fencer);
 }
 
-std::unique_ptr<Fencer> FencersRepo::get(int id) {
+std::unique_ptr<Fencer> FencerRepo::get(int id) {
   auto lock = db_mgr_.acquire_lock();
   return db_mgr_.get_storage().get_pointer<Fencer>(id);
 }
 
-void FencersRepo::update(const Fencer &fencer) {
+void FencerRepo::update(const Fencer &fencer) {
   auto lock = db_mgr_.acquire_lock();
   return db_mgr_.get_storage().update<Fencer>(fencer);
 }
 
-void FencersRepo::remove(int id) {
+void FencerRepo::remove(int id) {
   auto lock = db_mgr_.acquire_lock();
   return db_mgr_.get_storage().remove<Fencer>(id);
 }
 
-std::vector<Fencer> FencersRepo::get_all() {
+std::vector<Fencer> FencerRepo::get_all() {
   auto lock = db_mgr_.acquire_lock();
   return db_mgr_.get_storage().get_all<Fencer>();
 }
