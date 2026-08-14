@@ -2,6 +2,8 @@
 
 ## Overview
 
+Read my blog post [here](https://duckye.com/aus-fencer/)!
+
 ## Features
 
 - Create and look up fencing bouts between clubmates to keep score!
