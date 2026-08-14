@@ -7,7 +7,7 @@
 class FencerHandler : public BaseHandler {
   std::shared_ptr<FencerRepo> repo_;
 
-  crow::response list(const crow::request &req);
+  crow::response get_all(const crow::request &req);
   crow::response get(int id);
   crow::response create(const crow::request &req);
   crow::response update(int id, const crow::request &req);
