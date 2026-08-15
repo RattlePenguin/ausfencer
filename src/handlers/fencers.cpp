@@ -11,7 +11,8 @@ FencerHandler::FencerHandler(const std::string &basePath)
 };
 
 crow::response FencerHandler::get_all(const crow::request &req) {
-  auto q = req.url_params.get("q") ? req.url_params.get("q") : "";
+  auto q_param = req.url_params.get("q") ? req.url_params.get("q") : "";
+  std::string q(q_param);
 
   // Indicates page of fencers
   int page{1};
@@ -37,8 +38,21 @@ crow::response FencerHandler::get_all(const crow::request &req) {
 
   crow::json::wvalue res;
   crow::json::wvalue::list fencers;
+  for (const auto &fencer : this->repo_->get_all(q, page, limit)) {
+    crow::json::wvalue fencer_json;
+    fencer_json["id"] = fencer.id;
+    fencer_json["first_name"] = fencer.first_name;
+    fencer_json["last_name"] = fencer.last_name;
+    fencer_json["birth_year"] = fencer.birth_year;
+    fencers.push_back(std::move(fencer_json));
+  }
+  res["fencers"] = std::move(fencers);
+
+  return crow::response(crow::OK, res);
 }
-crow::response FencerHandler::get(int id);
+
+crow::response FencerHandler::get(int id) {}
+
 crow::response FencerHandler::create(const crow::request &req);
 crow::response FencerHandler::update(int id, const crow::request &req);
 crow::response FencerHandler::remove(int id);
