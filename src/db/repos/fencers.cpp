@@ -42,5 +42,12 @@ std::vector<Fencer> FencerRepo::get_all(const std::string &q, const int page,
     // Get all fencers, limited to limit after skipping offset * limit
     return db_mgr_.get_storage().get_all<Fencer>(
         sql::limit(limit, sql::offset(offset)));
+  } else {
+    std::string search_pattern{"%" + q + "%"};
+
+    return db_mgr_.get_storage().get_all<Fencer>(
+        sql::limit(limit, sql::offset(offset)),
+        sql::where(sql::like(&Fencer::first_name, search_pattern) ||
+                   sql::like(&Fencer::last_name, search_pattern)));
   }
 }
