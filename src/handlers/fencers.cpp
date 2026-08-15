@@ -51,7 +51,20 @@ crow::response FencerHandler::get_all(const crow::request &req) {
   return crow::response(crow::OK, res);
 }
 
-crow::response FencerHandler::get(int id) {}
+crow::response FencerHandler::get(int id) {
+  crow::json::wvalue res;
+  auto fencer{this->repo_->get(id)};
+
+  if (!fencer) {
+    return this->not_found("Fencer not found");
+  }
+
+  res["id"] = fencer->id;
+  res["first_name"] = fencer->first_name;
+  res["last_name"] = fencer->last_name;
+  res["birth_year"] = fencer->birth_year;
+  return crow::response(crow::OK, res);
+}
 
 crow::response FencerHandler::create(const crow::request &req);
 crow::response FencerHandler::update(int id, const crow::request &req);
