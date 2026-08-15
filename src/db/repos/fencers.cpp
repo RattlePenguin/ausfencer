@@ -2,6 +2,7 @@
 #include "db/db_manager.hpp"
 #include "db/repos/base.hpp"
 #include "models/Fencer.hpp"
+#include "sqlite_orm/sqlite_orm.h"
 #include <memory>
 
 FencerRepo::FencerRepo(DbManager &db_mgr) : BaseRepo(db_mgr) {
@@ -30,7 +31,16 @@ void FencerRepo::remove(int id) {
   return db_mgr_.get_storage().remove<Fencer>(id);
 }
 
-std::vector<Fencer> FencerRepo::get_all() {
+std::vector<Fencer> FencerRepo::get_all(const std::string &q, const int page,
+                                        const int limit) {
   auto lock = db_mgr_.acquire_lock();
-  return db_mgr_.get_storage().get_all<Fencer>();
+
+  // how many entries to skip.
+  int offset{(page - 1) * limit};
+
+  if (q.empty()) {
+    // Get all fencers, limited to limit after skipping offset * limit
+    return db_mgr_.get_storage().get_all<Fencer>(
+        sql::limit(limit, sql::offset(offset)));
+  }
 }

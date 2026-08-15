@@ -22,5 +22,7 @@ public:
   void remove(int id);
 
   // Returns a list of all fencers
-  std::vector<Fencer> get_all();
+  // Accepts q, page, and limit for limiting results
+  std::vector<Fencer> get_all(const std::string &q, const int page,
+                              const int limit);
 };
