@@ -59,3 +59,45 @@ TEST_F(FencerHandlerTest, CreateFencerSuccess) {
   EXPECT_EQ(json["birth_year"].i(), 1990);
 }
 
+TEST_F(FencerHandlerTest, GetFencerByIdFoundAndNotFound) {
+  // Create fencer
+  std::string payload =
+      R"({"first_name": "Allan", "last_name": "Goodman", "birth_year": 1993})";
+  auto create_res =
+      handle_request("/api/fencers", crow::HTTPMethod::POST, payload);
+  EXPECT_EQ(create_res.code, 200);
+  auto created_json = crow::json::load(create_res.body);
+  int id = created_json["id"].i();
+
+  // GET existing fencer
+  auto get_res = handle_request("/api/fencers/" + std::to_string(id),
+                                crow::HTTPMethod::GET);
+  EXPECT_EQ(get_res.code, 200);
+  auto get_json = crow::json::load(get_res.body);
+  EXPECT_EQ(get_json["first_name"].s(), "Allan");
+
+  // GET non-existent fencer
+  auto not_found_res =
+      handle_request("/api/fencers/9999", crow::HTTPMethod::GET);
+  EXPECT_EQ(not_found_res.code, 404);
+}
+
+TEST_F(FencerHandlerTest, UpdateFencerSuccess) {
+  // Create fencer
+  std::string payload =
+      R"({"first_name": "Miles", "last_name": "Gonzalo-Morales", "birth_year": 1989})";
+  auto create_res =
+      handle_request("/api/fencers", crow::HTTPMethod::POST, payload);
+  auto created_json = crow::json::load(create_res.body);
+  int id = created_json["id"].i();
+
+  // Update fencer
+  std::string update_payload =
+      R"({"first_name": "Miles", "last_name": "GonzaloMorales", "birth_year": 1989})";
+  auto update_res = handle_request("/api/fencers/" + std::to_string(id),
+                                   crow::HTTPMethod::PUT, update_payload);
+  EXPECT_EQ(update_res.code, 200);
+  auto update_json = crow::json::load(update_res.body);
+  EXPECT_EQ(update_json["last_name"].s(), "GonzaloMorales");
+}
+
