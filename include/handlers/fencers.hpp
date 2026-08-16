@@ -3,6 +3,7 @@
 #include "base.hpp"
 #include "db/repos/fencers.hpp"
 #include "interface.hpp"
+#include <memory>
 
 class FencerHandler : public BaseHandler {
   std::shared_ptr<FencerRepo> repo_;
@@ -29,6 +30,6 @@ class FencerHandler : public BaseHandler {
   crow::response remove(int id);
 
 public:
-  FencerHandler(const std::string &basePath);
+  FencerHandler(const std::string &basePath, std::shared_ptr<FencerRepo>);
   void register_routes(App &app) override;
 };

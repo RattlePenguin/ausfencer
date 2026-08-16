@@ -1,13 +1,14 @@
 #pragma once
 
+#include "db/db_manager.hpp"
 #include "interface.hpp"
 #include <string>
 
 class BaseRepo : public IRepo {
 protected:
-  DbManager &db_mgr_;
+  std::shared_ptr<DbManager> db_mgr_;
   std::string name_;
 
 public:
-  BaseRepo(DbManager &db_mgr);
+  BaseRepo(std::shared_ptr<DbManager> db_mgr);
 };

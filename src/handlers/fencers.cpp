@@ -5,9 +5,11 @@
 #include <crow/http_response.h>
 #include <crow/json.h>
 #include <exception>
+#include <memory>
 
-FencerHandler::FencerHandler(const std::string &basePath)
-    : BaseHandler(basePath) {
+FencerHandler::FencerHandler(const std::string &basePath,
+                             std::shared_ptr<FencerRepo> repo)
+    : BaseHandler(basePath), repo_{repo} {
   this->name_ = "FencerHandler";
 };
 

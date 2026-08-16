@@ -31,6 +31,7 @@ add_executable(${PROJECT_NAME}
   src/handlers/fencers.cpp
   src/db/db_manager.cpp
   src/db/repos/base.cpp
+  src/db/repos/fencers.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
