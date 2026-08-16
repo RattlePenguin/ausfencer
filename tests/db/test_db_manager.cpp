@@ -31,3 +31,14 @@ TEST_F(DbManagerTest, StorageTableCreationAndSyncSchema) {
   EXPECT_EQ(retrieved->birth_year, 2000);
 }
 
+TEST_F(DbManagerTest, ConcurrentLockAcquisition) {
+  DbManager db_mgr(":memory:");
+  {
+    auto lock1 = db_mgr.acquire_lock();
+    EXPECT_TRUE(lock1.owns_lock());
+  }
+  {
+    auto lock2 = db_mgr.acquire_lock();
+    EXPECT_TRUE(lock2.owns_lock());
+  }
+}
