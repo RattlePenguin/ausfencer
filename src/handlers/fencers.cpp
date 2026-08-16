@@ -88,7 +88,6 @@ crow::response FencerHandler::create(const crow::request &req) {
 }
 
 crow::response FencerHandler::update(int id, const crow::request &req) {
-  crow::json::wvalue res;
   auto old_fencer{this->repo_->get(id)};
 
   if (!old_fencer) {
@@ -105,6 +104,7 @@ crow::response FencerHandler::update(int id, const crow::request &req) {
 
   this->repo_->update(updated_fencer);
 
+  crow::json::wvalue res;
   res["id"] = updated_fencer.id;
   res["first_name"] = updated_fencer.first_name;
   res["last_name"] = updated_fencer.last_name;
@@ -112,7 +112,19 @@ crow::response FencerHandler::update(int id, const crow::request &req) {
   return crow::response(crow::OK, res);
 }
 
-crow::response FencerHandler::remove(int id) {}
+crow::response FencerHandler::remove(int id) {
+  auto old_fencer{this->repo_->get(id)};
+
+  if (!old_fencer) {
+    return this->not_found("Fencer not found");
+  }
+
+  this->repo_->remove(id);
+
+  crow::json::wvalue res;
+  res["success"] = true;
+  return crow::response(crow::OK, res);
+}
 
 void FencerHandler::register_routes(App &app) {
   app.route_dynamic(this->basePath_)
