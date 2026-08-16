@@ -64,3 +64,19 @@ TEST_F(FencerRepoTest, GetAllWithPaginationAndSearch) {
   repo_->create(Fencer{0, "Charlie", "Brown", 2005});
   repo_->create(Fencer{0, "David", "Smith", 1995});
 
+  // Test get_all default without search
+  auto page1 = repo_->get_all("", 1, 2);
+  EXPECT_EQ(page1.size(), 2u);
+
+  auto page2 = repo_->get_all("", 2, 2);
+  EXPECT_EQ(page2.size(), 2u);
+
+  // Test get_all search filter for "Smith"
+  auto smiths = repo_->get_all("Smith", 1, 10);
+  EXPECT_EQ(smiths.size(), 3u);
+
+  // Test get_all search filter for "Charlie"
+  auto charlie = repo_->get_all("Charlie", 1, 10);
+  ASSERT_EQ(charlie.size(), 1u);
+  EXPECT_EQ(charlie[0].first_name, "Charlie");
+}
