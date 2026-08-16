@@ -43,3 +43,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
   ${PROJECT_SOURCE_DIR}/include
   ${Boost_INCLUDE_DIRS}
 )
+
+enable_testing()
+include(GoogleTest)
+add_subdirectory(tests)

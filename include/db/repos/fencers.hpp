@@ -1,3 +1,5 @@
+#pragma once
+
 #include "base.hpp"
 #include "db/db_manager.hpp"
 #include "models/Fencer.hpp"
