@@ -28,7 +28,7 @@ protected:
     req.url = url;
     req.method = method;
     req.body = body;
-    
+
     crow::response res;
     app_->handle_full(req, res);
     return res;
@@ -43,5 +43,19 @@ TEST_F(FencerHandlerTest, GetAllEmptyList) {
   ASSERT_TRUE(json);
   EXPECT_TRUE(json.has("fencers"));
   EXPECT_EQ(json["fencers"].size(), 0u);
+}
+
+TEST_F(FencerHandlerTest, CreateFencerSuccess) {
+  std::string payload =
+      R"({"first_name": "Allan", "last_name": "Goodman", "birth_year": 1990})";
+  auto res = handle_request("/api/fencers", crow::HTTPMethod::POST, payload);
+  EXPECT_EQ(res.code, 200);
+
+  auto json = crow::json::load(res.body);
+  ASSERT_TRUE(json);
+  EXPECT_GT(json["id"].i(), 0);
+  EXPECT_EQ(json["first_name"].s(), "Allan");
+  EXPECT_EQ(json["last_name"].s(), "Goodman");
+  EXPECT_EQ(json["birth_year"].i(), 1990);
 }
 
