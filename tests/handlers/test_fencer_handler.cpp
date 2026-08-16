@@ -22,5 +22,16 @@ protected:
     app_->validate();
   }
 
+  crow::response handle_request(const std::string &url, crow::HTTPMethod method,
+                                const std::string &body = "") {
+    crow::request req;
+    req.url = url;
+    req.method = method;
+    req.body = body;
+    
+    crow::response res;
+    app_->handle_full(req, res);
+    return res;
+  }
 };
 
