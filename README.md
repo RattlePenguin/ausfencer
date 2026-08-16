@@ -1,25 +1,25 @@
-# Fencing Tracker and Referee UI
-Fencing tournament / session hosting and tracking service. Fencing Referee UI designed for use on mobile devices. Currently has to be self-hosted, working on deployment in the future.
+# AusFencer
 
-# Features
-### Core Features
-- Create and look up fencing bouts between clubmates to keep score!
-- Host fencing tournaments in standard format (WIP)
-- Mobile referee tool to easily referee dry fencing bouts (no electric) or non-scoring systems (no numbers)
+## Overview
 
-# Installation
-1. Clone Repository
-```
-git clone https://github.com/RattlePenguin/im-fencing-it.git
-cd im-fencing-it
-```
+Read my [blog post](https://duckye.com/aus-fencer/) for a less technical write-up!
 
-# Web API Usage
-```
-cd FencingTracker.Api
-dotnet run
-```
+AusFencer seeks to solve pain points found in fencing clubs across
+the world, mainly revolving around scoring equipment.
 
-Navigate to endpoint `/scalar` to open the Scalar UI for information and testing.
+## Features
 
-Nagivate to endpoint `/index.html` to access the referee tool.
+- Completed bouts can be stored securely and retrieved later for viewing.
+- Mobile-supported referee tool to support fencing without electrics or remote control.
+- Fencers can be searched for via name, along with all bouts they fenced in.
+- ~~Host tournaments in standard FIE format.~~
+  - ~~Designate fencers to pools based on rank and affiliation.~~
+  - ~~Designate fencers to DE based on pools results.~~
+  - ~~Keep track of available pistes.~~
+
+## Installation
+
+sqlite 3 installed in libs
+sqliteOrm via fetchcontent
+
+## Usage
