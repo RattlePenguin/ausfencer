@@ -101,3 +101,24 @@ TEST_F(FencerHandlerTest, UpdateFencerSuccess) {
   EXPECT_EQ(update_json["last_name"].s(), "GonzaloMorales");
 }
 
+TEST_F(FencerHandlerTest, DeleteFencerSuccess) {
+  // Create fencer
+  std::string payload =
+      R"({"first_name": "Cheung", "last_name": "Ka Long", "birth_year": 1997})";
+  auto create_res =
+      handle_request("/api/fencers", crow::HTTPMethod::POST, payload);
+  auto created_json = crow::json::load(create_res.body);
+  int id = created_json["id"].i();
+
+  // Delete fencer
+  auto delete_res = handle_request("/api/fencers/" + std::to_string(id),
+                                   crow::HTTPMethod::DELETE);
+  EXPECT_EQ(delete_res.code, 200);
+  auto delete_json = crow::json::load(delete_res.body);
+  EXPECT_TRUE(delete_json["success"].b());
+
+  // GET deleted fencer should fail with 404
+  auto get_res = handle_request("/api/fencers/" + std::to_string(id),
+                                crow::HTTPMethod::GET);
+  EXPECT_EQ(get_res.code, 404);
+}
