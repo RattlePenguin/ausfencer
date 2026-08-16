@@ -2,7 +2,10 @@
 
 ## Overview
 
-Read my [blog post](https://duckye.com/aus-fencer/)!
+Read my [blog post](https://duckye.com/aus-fencer/) for a less technical write-up!
+
+AusFencer seeks to solve pain points found in fencing clubs across
+the world, mainly revolving around scoring equipment.
 
 ## Features
 
