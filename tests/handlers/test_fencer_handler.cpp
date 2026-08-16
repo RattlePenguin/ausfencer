@@ -35,3 +35,13 @@ protected:
   }
 };
 
+TEST_F(FencerHandlerTest, GetAllEmptyList) {
+  auto res = handle_request("/api/fencers", crow::HTTPMethod::GET);
+  EXPECT_EQ(res.code, 200);
+
+  auto json = crow::json::load(res.body);
+  ASSERT_TRUE(json);
+  EXPECT_TRUE(json.has("fencers"));
+  EXPECT_EQ(json["fencers"].size(), 0u);
+}
+
