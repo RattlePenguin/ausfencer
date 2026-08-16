@@ -11,4 +11,5 @@ protected:
 
 public:
   BaseRepo(std::shared_ptr<DbManager> db_mgr);
+  std::string get_name() const;
 };
