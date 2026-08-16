@@ -23,7 +23,7 @@ crow::response FencerHandler::get_all(const crow::request &req) {
       req.url_params.get("page") ? req.url_params.get("page") : "1";
 
   try {
-    page = std::max(page, std::stoi(page_param));
+    page = std::max(1, std::stoi(page_param));
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
   }
@@ -34,7 +34,7 @@ crow::response FencerHandler::get_all(const crow::request &req) {
       req.url_params.get("limit") ? req.url_params.get("limit") : "10";
 
   try {
-    limit = std::max(limit, std::stoi(limit_param));
+    limit = std::max(1, std::stoi(limit_param));
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
   }

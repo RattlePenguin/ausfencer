@@ -13,6 +13,9 @@ Server::Server(const ServerConfig &config) : config_{config} {
   app_ = std::make_unique<App>();
   db_mgr_ = std::make_shared<DbManager>("db.ausfencer");
 
+  // TODO TEST ENTRIES
+  db_mgr_->get_storage().insert(Fencer{0, "big", "balls", 1999});
+
   // TODO Taken from AsaHero, write documentation
   auto &cors = app_->get_middleware<crow::CORSHandler>();
   cors.global()
@@ -27,7 +30,7 @@ Server::Server(const ServerConfig &config) : config_{config} {
 void Server::setup() {
   this->add_handler(std::make_shared<FencerHandler>(
       "/api/fencers", std::make_shared<FencerRepo>(this->db_mgr_)));
-};
+}
 
 void Server::start() {
   this->setup();
@@ -37,4 +40,5 @@ void Server::start() {
 
 void Server::add_handler(std::shared_ptr<IHandler> handler) {
   handlers_.push_back(handler);
+  handler->register_routes(*this->app_);
 }
