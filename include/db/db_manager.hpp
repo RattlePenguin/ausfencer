@@ -1,8 +1,8 @@
 #pragma once
 
+#include "models/Bout.hpp"
 #include "models/Fencer.hpp"
 #include <mutex>
-#include <shared_mutex>
 #include <sqlite3.h>
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
@@ -22,7 +22,22 @@ inline auto create_db_storage(const std::string &db_name) {
                                        sql::primary_key().autoincrement()),
                       sql::make_column("first_name", &Fencer::first_name),
                       sql::make_column("last_name", &Fencer::last_name),
-                      sql::make_column("birth_year", &Fencer::birth_year)));
+                      sql::make_column("birth_year", &Fencer::birth_year)),
+      sql::make_table(
+          "bouts",
+          sql::make_column("id", &Bout::id, sql::primary_key().autoincrement()),
+          sql::make_column("left_fencer_id", &Bout::left_fencer_id),
+          sql::foreign_key(&Bout::left_fencer_id).references(&Fencer::id),
+          sql::make_column("right_fencer_id", &Bout::right_fencer_id),
+          sql::foreign_key(&Bout::right_fencer_id).references(&Fencer::id),
+          sql::make_column("weapon", &Bout::weapon),
+          sql::make_column("time", &Bout::time),
+          sql::make_column("left_score", &Bout::left_score),
+          sql::make_column("right_score", &Bout::right_score),
+          sql::make_column("left_yellow", &Bout::left_yellow),
+          sql::make_column("right_yellow", &Bout::right_yellow),
+          sql::make_column("left_red", &Bout::left_red),
+          sql::make_column("right_red", &Bout::right_red)));
 }
 
 using Storage = decltype(create_db_storage(""));
