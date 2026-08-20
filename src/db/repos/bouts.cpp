@@ -31,23 +31,26 @@ void BoutRepo::remove(int id) {
   return db_mgr_->get_storage().remove<Bout>(id);
 }
 
-std::vector<Bout> BoutRepo::get_all(const std::string &q, const int page,
-                                    const int limit) {
+std::vector<Bout> BoutRepo::get_all(const int page, const int limit) {
   auto lock = db_mgr_->acquire_lock();
 
   // how many entries to skip.
   int offset{(page - 1) * limit};
 
-  if (q.empty()) {
-    // Get all bouts, limited to limit after skipping offset * limit
-    return db_mgr_->get_storage().get_all<Bout>(
-        sql::limit(limit, sql::offset(offset)));
-  } else {
-    std::string search_pattern{"%" + q + "%"};
+  // Get all bouts, limited to limit after skipping offset * limit
+  return db_mgr_->get_storage().get_all<Bout>(
+      sql::limit(limit, sql::offset(offset)));
+}
 
-    return db_mgr_->get_storage().get_all<Bout>(
-        sql::where(sql::like(&Bout::first_name, search_pattern) ||
-                   sql::like(&Bout::last_name, search_pattern)),
-        sql::limit(limit, sql::offset(offset)));
-  }
+std::vector<Bout> BoutRepo::get_all_by_fencer(const int fencer_id,
+                                              const int page, const int limit) {
+  auto lock = db_mgr_->acquire_lock();
+
+  // how many entries to skip.
+  int offset{(page - 1) * limit};
+
+  return db_mgr_->get_storage().get_all<Bout>(
+      sql::where(sql::like(&Bout::left_fencer_id, fencer_id) ||
+                 sql::like(&Bout::right_fencer_id, fencer_id)),
+      sql::limit(limit, sql::offset(offset)));
 }

@@ -24,7 +24,12 @@ public:
   void remove(int id);
 
   // Returns a list of all bouts
-  // Accepts q, page, and limit for limiting results
-  std::vector<Bout> get_all(const std::string &q, const int page,
-                            const int limit);
+  // Accepts page and limit for limiting results
+  std::vector<Bout> get_all(const int page, const int limit);
+
+  // get_all but with fencer id param
+  // Returns a list of all bouts involving a given fencer
+  // Accepts page and limit for limiting results
+  std::vector<Bout> get_all_by_fencer(const int fencer_id, const int page,
+                                      const int limit);
 };
