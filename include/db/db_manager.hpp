@@ -30,6 +30,7 @@ inline auto create_db_storage(const std::string &db_name) {
           sql::foreign_key(&Bout::left_fencer_id).references(&Fencer::id),
           sql::make_column("right_fencer_id", &Bout::right_fencer_id),
           sql::foreign_key(&Bout::right_fencer_id).references(&Fencer::id),
+          sql::make_column("timestamp", &Bout::timestamp),
           sql::make_column("weapon", &Bout::weapon),
           sql::make_column("time", &Bout::time),
           sql::make_column("left_score", &Bout::left_score),

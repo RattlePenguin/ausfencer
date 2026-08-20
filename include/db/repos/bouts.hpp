@@ -12,18 +12,18 @@ public:
 
   // Creates a new data entry with the given Bout, returns its primary id
   // Primary id is autoincremented with each entry
-  int create(const Bout &fencer);
+  int create(const Bout &bout);
 
   // Getter for Bout with id
   std::unique_ptr<Bout> get(int id);
 
   // Updates Bout, id is taken from the Bout object itself
-  void update(const Bout &fencer);
+  void update(const Bout &bout);
 
   // Removes Bout with given id
   void remove(int id);
 
-  // Returns a list of all fencers
+  // Returns a list of all bouts
   // Accepts q, page, and limit for limiting results
   std::vector<Bout> get_all(const std::string &q, const int page,
                             const int limit);

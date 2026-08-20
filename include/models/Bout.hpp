@@ -1,11 +1,14 @@
 #pragma once
 
+#include <ctime>
+
 enum Weapon { Foil, Epee, Sabre };
 
 struct Bout {
   int id;
   int left_fencer_id;
   int right_fencer_id;
+  time_t timestamp;
 
   Weapon weapon;
   int time; // seconds
