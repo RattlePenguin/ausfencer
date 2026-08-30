@@ -1,5 +1,5 @@
-#include "handlers/fencers.hpp"
-#include "models/Fencer.hpp"
+#include "handlers/bouts.hpp"
+#include "models/Bout.hpp"
 #include <crow/common.h>
 #include <crow/http_request.h>
 #include <crow/http_response.h>
@@ -7,17 +7,17 @@
 #include <exception>
 #include <memory>
 
-FencerHandler::FencerHandler(const std::string &basePath,
-                             std::shared_ptr<FencerRepo> repo)
+BoutHandler::BoutHandler(const std::string &basePath,
+                         std::shared_ptr<BoutRepo> repo)
     : BaseHandler(basePath), repo_{repo} {
-  this->name_ = "FencerHandler";
+  this->name_ = "BoutHandler";
 };
 
-crow::response FencerHandler::get_all(const crow::request &req) {
+crow::response BoutHandler::get_all(const crow::request &req) {
   auto q_param = req.url_params.get("q") ? req.url_params.get("q") : "";
   std::string q(q_param);
 
-  // Indicates page of fencers
+  // Indicates page of bouts
   int page{1};
   auto page_param =
       req.url_params.get("page") ? req.url_params.get("page") : "1";
@@ -40,85 +40,85 @@ crow::response FencerHandler::get_all(const crow::request &req) {
   }
 
   crow::json::wvalue res;
-  crow::json::wvalue::list fencers;
-  for (const auto &fencer : this->repo_->get_all(q, page, limit)) {
-    crow::json::wvalue fencer_json;
-    fencer_json["id"] = fencer.id;
-    fencer_json["first_name"] = fencer.first_name;
-    fencer_json["last_name"] = fencer.last_name;
-    fencer_json["birth_year"] = fencer.birth_year;
-    fencers.push_back(std::move(fencer_json));
+  crow::json::wvalue::list bouts;
+  for (const auto &bout : this->repo_->get_all(q, page, limit)) {
+    crow::json::wvalue bout_json;
+    bout_json["id"] = bout.id;
+    bout_json["first_name"] = bout.first_name;
+    bout_json["last_name"] = bout.last_name;
+    bout_json["birth_year"] = bout.birth_year;
+    bouts.push_back(std::move(bout_json));
   }
-  res["fencers"] = std::move(fencers);
+  res["bouts"] = std::move(bouts);
 
   return crow::response(crow::OK, res);
 }
 
-crow::response FencerHandler::get(int id) {
+crow::response BoutHandler::get(int id) {
   crow::json::wvalue res;
-  auto fencer{this->repo_->get(id)};
+  auto bout{this->repo_->get(id)};
 
-  if (!fencer) {
-    return this->not_found("Fencer not found");
+  if (!bout) {
+    return this->not_found("Bout not found");
   }
 
-  res["id"] = fencer->id;
-  res["first_name"] = fencer->first_name;
-  res["last_name"] = fencer->last_name;
-  res["birth_year"] = fencer->birth_year;
+  res["id"] = bout->id;
+  res["first_name"] = bout->first_name;
+  res["last_name"] = bout->last_name;
+  res["birth_year"] = bout->birth_year;
   return crow::response(crow::OK, res);
 }
 
-crow::response FencerHandler::create(const crow::request &req) {
+crow::response BoutHandler::create(const crow::request &req) {
   crow::json::rvalue json{crow::json::load(req.body)};
 
-  Fencer fencer{
+  Bout bout{
       .id = 1,
       .first_name = json["first_name"].s(),
       .last_name = json["last_name"].s(),
       .birth_year = static_cast<int>(json["birth_year"].i()),
   };
-  int real_id{this->repo_->create(fencer)};
+  int real_id{this->repo_->create(bout)};
 
   crow::json::wvalue res;
   res["id"] = real_id;
-  res["first_name"] = fencer.first_name;
-  res["last_name"] = fencer.last_name;
-  res["birth_year"] = fencer.birth_year;
+  res["first_name"] = bout.first_name;
+  res["last_name"] = bout.last_name;
+  res["birth_year"] = bout.birth_year;
 
   return crow::response(crow::OK, res);
 }
 
-crow::response FencerHandler::update(int id, const crow::request &req) {
-  auto old_fencer{this->repo_->get(id)};
+crow::response BoutHandler::update(int id, const crow::request &req) {
+  auto old_bout{this->repo_->get(id)};
 
-  if (!old_fencer) {
-    return this->not_found("Fencer not found");
+  if (!old_bout) {
+    return this->not_found("Bout not found");
   }
 
   crow::json::rvalue json{crow::json::load(req.body)};
-  Fencer updated_fencer{
-      .id = old_fencer->id,
+  Bout updated_bout{
+      .id = old_bout->id,
       .first_name = json["first_name"].s(),
       .last_name = json["last_name"].s(),
       .birth_year = static_cast<int>(json["birth_year"].i()),
   };
 
-  this->repo_->update(updated_fencer);
+  this->repo_->update(updated_bout);
 
   crow::json::wvalue res;
-  res["id"] = updated_fencer.id;
-  res["first_name"] = updated_fencer.first_name;
-  res["last_name"] = updated_fencer.last_name;
-  res["birth_year"] = updated_fencer.birth_year;
+  res["id"] = updated_bout.id;
+  res["first_name"] = updated_bout.first_name;
+  res["last_name"] = updated_bout.last_name;
+  res["birth_year"] = updated_bout.birth_year;
   return crow::response(crow::OK, res);
 }
 
-crow::response FencerHandler::remove(int id) {
-  auto old_fencer{this->repo_->get(id)};
+crow::response BoutHandler::remove(int id) {
+  auto old_bout{this->repo_->get(id)};
 
-  if (!old_fencer) {
-    return this->not_found("Fencer not found");
+  if (!old_bout) {
+    return this->not_found("Bout not found");
   }
 
   this->repo_->remove(id);
@@ -128,7 +128,7 @@ crow::response FencerHandler::remove(int id) {
   return crow::response(crow::OK, res);
 }
 
-void FencerHandler::register_routes(App &app) {
+void BoutHandler::register_routes(App &app) {
   app.route_dynamic(this->basePath_)
       .methods(crow::HTTPMethod::GET)(
           [this](const crow::request &req) { return this->get_all(req); });
