@@ -19,8 +19,9 @@ class FencerHandler : public BaseHandler {
   crow::response get(int id);
 
   // Creates the fencer with the given id
-  // TODO Currently accepts duplicate fencers without distinguishing
   // Returns the id of the fencer
+  // TODO Currently accepts duplicate fencers without distinguishing,
+  // automatically makes distinct id for each
   crow::response create(const crow::request &req);
 
   // Updates the fencer with the given id
