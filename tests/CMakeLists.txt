@@ -1,11 +1,13 @@
 add_executable(ausfencer_tests
   test_main.cpp
   db/test_db_manager.cpp
-  db/test_fencer_repo.cpp
+  db/repos/test_fencer_repo.cpp
+  db/repos/test_bout_repo.cpp
   handlers/test_fencer_handler.cpp
   ${CMAKE_SOURCE_DIR}/src/db/db_manager.cpp
   ${CMAKE_SOURCE_DIR}/src/db/repos/base.cpp
   ${CMAKE_SOURCE_DIR}/src/db/repos/fencers.cpp
+  ${CMAKE_SOURCE_DIR}/src/db/repos/bouts.cpp
   ${CMAKE_SOURCE_DIR}/src/handlers/base.cpp
   ${CMAKE_SOURCE_DIR}/src/handlers/fencers.cpp
 )
