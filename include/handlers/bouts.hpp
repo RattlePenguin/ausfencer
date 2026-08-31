@@ -19,8 +19,8 @@ class BoutHandler : public BaseHandler {
   crow::response get(int id);
 
   // Creates the bout with the given id
-  // TODO Currently accepts duplicate bouts without distinguishing
   // Returns the id of the bout
+  // TODO should the bout be created if fencer ids are not provided?
   crow::response create(const crow::request &req);
 
   // Updates the bout with the given id
