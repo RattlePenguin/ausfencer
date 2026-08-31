@@ -1,18 +1,11 @@
-first make a way to add bouts to a database
-forget fencers, just put name
+fencer to bout repo and handler
 
+Bouts
+bouts should be able to grab all related to a fencer id
+shouldn't be too bad, just same stuff as fencer handler
 
-Bout:
-leftFencerName: string
-rightFencerName: string
-weapon: enum (0 1 2)
-leftScore: 0-99
-rightScore: 0-99
+Fencer
+I would like to add better search filters for bouts,
+do get_all but return vector of id only
+  bout get by fencer id
 
-leftYellow: 0-1
-rightYellow: 0-1
-
-leftReds: 0-99
-rightReds: 0-99
-
-db.add(Bout)
