@@ -115,6 +115,15 @@ Caught startup exceptions only print to stdout and execution reaches the end of
 `main`, returning zero. Return a nonzero status for startup failure and report it
 to stderr so scripts can detect failure.
 
+### B11 — P0: Interleaved schema constraints prevent database creation (found and resolved 2026-10-09)
+
+The first runtime persistence tests exposed SQL creation failure near
+`right_fencer_id`: the pinned ORM emits table elements in declaration order,
+and foreign-key table constraints preceded later column definitions.
+Moved both foreign-key constraints after all Bout columns without changing their
+references or actions. The three existing DbManager tests now pass. See the
+[implementation handoff](implementation-progress.md) for validation details.
+
 ## Checks and decisions not yet proven to be bugs
 
 - **V01 — Weapon persistence, verify first.** `Bout::weapon` is an enum mapped
@@ -125,6 +134,10 @@ to stderr so scripts can detect failure.
   Fencer executable because DbManager syncs the full schema. The pinned revision
   was unavailable, so inspect and compile it before declaring failure or choosing
   adapters versus an integer persistence field. Test all three weapons.
+  **Implementation update, 2026-10-09:** resolved with explicit INTEGER enum traits,
+  preserving the typed model field and mapping Foil/Epee/Sabre to 0/1/2. All three
+  insert/read and update cases pass. JSON representation remains undecided; see
+  [implementation progress](implementation-progress.md).
 - **V02 — FK enforcement and deletion policy.** Two references exist, but effective
   connection PRAGMAs and enforcement were not tested. Do not label foreign keys
   disabled solely because DbManager has no explicit PRAGMA. Verify invalid insert

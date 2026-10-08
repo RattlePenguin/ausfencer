@@ -2,7 +2,8 @@
 
 #include <ctime>
 
-enum Weapon { Foil, Epee, Sabre };
+// Values are persisted as SQLite integers; keep this mapping stable.
+enum Weapon { Foil = 0, Epee = 1, Sabre = 2 };
 
 struct Bout {
   int id;

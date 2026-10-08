@@ -14,20 +14,50 @@ this file records implementation progress beyond its reviewed baseline.
 - Update this handoff in each implementation commit with the change, evidence,
   outstanding issues, and exact next increment. Check Git status before resuming.
 
-## Latest increment: correct the CMake minimum (B07)
+## Latest increment: enable Weapon persistence (V01)
 
-Changed the top-level minimum from 3.10 to 3.16. Both exact pinned dependencies
-declare 3.16 in their root CMakeLists.txt, so 3.14 (the FetchContent requirement)
-would still understate the build requirement. Dependency pins are unchanged.
+Added the four sqlite_orm enum traits in `include/db/weapon_mapping.hpp` and
+included them before schema construction. `Bout::weapon` remains a `Weapon`;
+SQLite stores INTEGER values `Foil=0`, `Epee=1`, `Sabre=2`. The existing numeric
+values are now explicit in the enum. This selects persistence only; the external
+JSON representation remains undecided. Unknown stored integers throw
+`std::domain_error` before conversion to the enum, including values beyond `int`.
 
-Review this increment with `git show HEAD`. This handoff and the checklist update
-belong to the same commit as the CMake change. B07 is resolved; step 1 as a whole
-is still incomplete. Stop here for the user's manual review.
+Runtime tests exposed another prerequisite blocker (B11): the schema declaration
+interleaved foreign-key constraints with columns. The pinned ORM emits that order,
+and SQLite rejects it near `right_fencer_id`. Moved both constraints to the end of
+the table declaration, preserving their references and default actions.
 
-Validation: `cmake -S . -B build` passed after the change using CMake 4.4.4;
-`git diff --check` passed. CMake 3.16 itself was not installed/tested. The minimum
-comes from the pinned dependency declarations. The baseline compilation failures
-below remain; no test suite could run.
+Added seven focused persistence tests to the existing test target: three weapon
+insert/read cases, three updates, and rejection of an unknown stored integer.
+They check the actual column type, integer values, and enum predicates/extraction.
+The copied Bout repository test file is still included and unchanged.
+
+Validation:
+
+- `cmake --build build --target aus-fencer --parallel 2` passed.
+- The new tests and the three existing DbManager tests compiled with strict C++17
+  and passed: **10/10**. Reproduce the focused run from the repository root:
+
+  ```sh
+  c++ -std=c++17 -pedantic-errors -Iinclude -Ibuild/_deps/sqlite_orm-src/include -Ibuild/_deps/gtest-src/googletest/include tests/test_main.cpp tests/db/test_weapon_persistence.cpp tests/db/test_db_manager.cpp src/db/db_manager.cpp build/lib/libgtest.a -lsqlite3 -pthread -o build/weapon_persistence_tests
+  ./build/weapon_persistence_tests
+  ```
+
+- The full test target still fails compilation in B01's copied Bout tests; CTest
+  has not run. The focused command does not replace the normal test target.
+- `git diff --check` passed. No server was launched or runtime database created.
+- FK enforcement, file-backed reopen/schema upgrades, and the full repository and
+  handler suites remain unverified. B08 is still open.
+
+Review with `git show HEAD`. V01 and B11 are resolved; step 1 remains incomplete.
+Stop here for manual review.
+
+## Completed increments
+
+- `de1193d`: B07, raise CMake minimum to the pinned dependencies' declared 3.16.
+  Configuration passed with CMake 4.4.4; 3.16 itself was not tested.
+- Latest commit: V01 integer Weapon mapping and B11 schema constraint ordering.
 
 ## Environment and baseline evidence
 
@@ -49,28 +79,27 @@ Available prerequisites:
   `build/baseline-build.log`; it must not be relied on in a fresh checkout.
 - **B01 reproduced:** copied Bout tests use invalid initializers, Fencer members,
   and the wrong list signature. Keep the file in the test target while repairing it.
-- **V01 confirmed as a blocker:** schema synchronization cannot compile because
-  `sqlite_orm::type_printer<Weapon>` lacks `print`. Inspect the pinned
+- **V01 confirmed in the baseline, now resolved above:** schema synchronization
+  could not compile because `sqlite_orm::type_printer<Weapon>` lacked `print`.
+  Inspect the pinned
   `examples/enum_binding.cpp` for the customization interface. Insertion and
-  extraction also need verification when adding support.
+  extraction are verified by the latest increment's tests.
 - **V03 linkage verified:** pinned ORM CMake links `SQLite::SQLite3` through its
   interface target; the generated application link command includes
   `/usr/lib/libsqlite3.so`. No extra application SQLite link is needed here.
   Schema-upgrade behavior remains unverified.
 - CMake reports a Boost policy warning and the pinned ORM's deprecated SQLite
   target name. These are warnings, not the observed build blockers.
-- FK enforcement, weapon round trips, and runtime tests remain unverified.
-  No server was launched and no runtime database was created.
+- These are historical baseline observations; use the latest validation above
+  for current implementation status.
 
 ## Next review increment
 
-After review, address V01 only: add explicit sqlite_orm support for `Weapon`,
-preserving the typed Bout field, and verify all three weapon round trips. Integer
-storage matching existing enum values is a candidate; record the chosen mapping
-and evidence. This does not settle the external JSON representation.
-
-Then repair B01's Bout fixtures/CRUD tests in a separate commit. Follow with
-participant filtering/ordering and FK behavior checks as separate review units.
+After review, repair B01's copied Bout fixtures/CRUD tests. Use FencerRepo and
+BoutRepo sharing one in-memory DbManager, initialize every Bout field, and cover
+generated IDs, complete field round trips/updates, missing IDs, removal, empty
+lists, and distinct page contents. Keep history filtering/ordering and FK behavior
+checks as subsequent review units; do not bundle the handler implementation here.
 B08 (C++17 initialization) also remains open. Do not claim a green baseline until
 both application and test targets build and the existing suites pass.
 

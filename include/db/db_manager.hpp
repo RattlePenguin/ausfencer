@@ -1,5 +1,6 @@
 #pragma once
 
+#include "db/weapon_mapping.hpp"
 #include "models/Bout.hpp"
 #include "models/Fencer.hpp"
 #include <mutex>
@@ -27,9 +28,7 @@ inline auto create_db_storage(const std::string &db_name) {
           "bouts",
           sql::make_column("id", &Bout::id, sql::primary_key().autoincrement()),
           sql::make_column("left_fencer_id", &Bout::left_fencer_id),
-          sql::foreign_key(&Bout::left_fencer_id).references(&Fencer::id),
           sql::make_column("right_fencer_id", &Bout::right_fencer_id),
-          sql::foreign_key(&Bout::right_fencer_id).references(&Fencer::id),
           sql::make_column("timestamp", &Bout::timestamp),
           sql::make_column("weapon", &Bout::weapon),
           sql::make_column("time", &Bout::time),
@@ -38,7 +37,9 @@ inline auto create_db_storage(const std::string &db_name) {
           sql::make_column("left_yellow", &Bout::left_yellow),
           sql::make_column("right_yellow", &Bout::right_yellow),
           sql::make_column("left_red", &Bout::left_red),
-          sql::make_column("right_red", &Bout::right_red)));
+          sql::make_column("right_red", &Bout::right_red),
+          sql::foreign_key(&Bout::left_fencer_id).references(&Fencer::id),
+          sql::foreign_key(&Bout::right_fencer_id).references(&Fencer::id)));
 }
 
 using Storage = decltype(create_db_storage(""));
