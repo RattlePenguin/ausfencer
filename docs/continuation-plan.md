@@ -4,6 +4,10 @@ Reviewed baseline: `54e1ffe`, 2026-10-08. This document records future work;
 no application, test, or build defects were fixed during the review.
 Read [project context](project-context.md) for architecture, contracts, and setup.
 
+Implementation began on 2026-10-09 on `bout/crud`. Read the
+[implementation handoff](implementation-progress.md) for the latest change,
+validation results, manual review checkpoint, and next small increment.
+
 The next milestone is a buildable, tested Bout CRUD API with participant history
 retrieval and an explicit guest-participant policy. Keep the existing layered
 design. Mobile refereeing, teams, and tournaments are separate later milestones.
@@ -147,7 +151,7 @@ to stderr so scripts can detect failure.
 
 ### 1. Establish the build and repair the Bout repository baseline
 
-- [ ] Provision compatible CMake, Crow, Boost, SQLite development files, compiler,
+- [x] Provision compatible CMake, Crow, Boost, SQLite development files, compiler,
   and access to the pinned FetchContent repositories. Record versions.
 - [ ] Verify V01 and V03 against the exact pinned sqlite_orm, then resolve confirmed
   dependency/build issues, B07, and B08 without unnecessary dependency upgrades.
