@@ -37,7 +37,7 @@ void FixtureRepo::write_context(const FixtureData &data) {
        e.bye ? "1" : "0",std::to_string(e.fencer)});
 }
 
-void FixtureRepo::import_fixture(const FixtureData &data, bool approved, bool reset) {
+ImportSummary FixtureRepo::import_fixture(const FixtureData &data, bool approved, bool reset) {
   validate_fixture(data);
   auto lock = db_->acquire_lock();
   db_->query("BEGIN IMMEDIATE");
@@ -55,13 +55,20 @@ void FixtureRepo::import_fixture(const FixtureData &data, bool approved, bool re
         db_->query(std::string("DELETE FROM ") + table);
     }
     db_->query("INSERT INTO tracker_meta VALUES('dataset','ausfencer-demo-v1') ON CONFLICT DO NOTHING");
+    auto count = [&](const std::string &table) {
+      return std::stoi(db_->query("SELECT count(*) AS total FROM " + table)[0].at("total"));
+    };
+    auto profiles = count("profiles"), events = count("events"), bouts = count("bouts");
     write_context(data);
     write_bouts(data);
+    ImportSummary summary{count("profiles")-profiles,count("events")-events,count("bouts")-bouts,0};
+    summary.repeated_observations = data.bouts.size() - summary.bouts_created;
     if (approved) db_->query("INSERT INTO imports(checksum,status,detail) VALUES(?,'applied',?)",
                              {data.checksum,reset ? "demo reset" : "fixture import"});
     db_->query(approved ? "COMMIT" : "ROLLBACK");
     if (!approved) db_->query("INSERT INTO imports(checksum,status,detail) VALUES(?,'preview','fixture import')",
                               {data.checksum});
+    return summary;
   } catch (const std::exception &e) {
     if (!db_->get_storage().get_autocommit()) db_->query("ROLLBACK");
     db_->query("INSERT INTO imports(checksum,status,detail) VALUES(?,'failed',?)", {data.checksum,e.what()});

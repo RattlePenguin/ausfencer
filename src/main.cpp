@@ -43,10 +43,12 @@ int main(int argc, char *argv[]) {
         throw std::invalid_argument("Preview the fixture and supply its checksum with --approve");
       FixtureRepo repo(std::make_shared<DbManager>(config.database));
       if (!seed && !approval.empty()) throw std::invalid_argument("Approval requires --seed or --reset-demo");
-      repo.import_fixture(data, seed, reset);
+      auto summary = repo.import_fixture(data, seed, reset);
       std::cout << (seed ? "Applied" : "Preview") << " synthetic fixture: " << data.fencers.size()
                 << " fencers, " << data.events.size() << " events, " << data.bouts.size()
-                << " observations\nSHA256 " << data.checksum << '\n';
+                << " observations\nCreated: " << summary.profiles_created << " profiles, "
+                << summary.events_created << " events, " << summary.bouts_created << " bouts; "
+                << summary.repeated_observations << " repeated observations\nSHA256 " << data.checksum << '\n';
       return 0;
     }
     if (!approval.empty()) throw std::invalid_argument("--approve requires --seed");

@@ -40,10 +40,12 @@ TEST_F(TrackerTest, FixtureContextPreviewIsReversibleAndRepeatable) {
   auto db = std::make_shared<DbManager>(":memory:");
   FixtureRepo repo(db);
   auto data = load_fixture(FIXTURE_DIR);
-  repo.import_fixture(data);
+  auto preview=repo.import_fixture(data);
+  EXPECT_EQ(preview.profiles_created,12); EXPECT_EQ(preview.events_created,4); EXPECT_EQ(preview.bouts_created,44);
   EXPECT_TRUE(db->query("SELECT * FROM profiles").empty());
   repo.import_fixture(data, true);
-  repo.import_fixture(data, true);
+  auto repeat=repo.import_fixture(data, true);
+  EXPECT_EQ(repeat.bouts_created,0); EXPECT_EQ(repeat.repeated_observations,44u);
   EXPECT_EQ(db->query("SELECT * FROM profiles").size(), 12u);
   EXPECT_EQ(db->query("SELECT * FROM entries").size(), 18u);
   EXPECT_EQ(db->query("SELECT visible FROM profiles WHERE fencer_id=112")[0].at("visible"), "0");

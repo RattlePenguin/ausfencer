@@ -37,6 +37,11 @@ struct FixtureData {
   std::string checksum;
 };
 
+struct ImportSummary {
+  int profiles_created, events_created, bouts_created;
+  size_t repeated_observations;
+};
+
 struct TrackerFilter {
   std::string weapon, year, stage, trust, category, from, to, coverage;
   int opponent{0};
