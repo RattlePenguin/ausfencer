@@ -1,4 +1,5 @@
 #include "db/db_manager.hpp"
+#include "db/migrations.hpp"
 #include <stdexcept>
 
 DbManager::DbManager(const std::string &db_name)
@@ -9,6 +10,7 @@ DbManager::DbManager(const std::string &db_name)
   query("PRAGMA busy_timeout = 5000");
   // Keep legacy records while adding versioned domain tables separately.
   storage_.sync_schema();
+  migrate_tracker(*this);
 }
 
 DbRows DbManager::query(const std::string &statement,

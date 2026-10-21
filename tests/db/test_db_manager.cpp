@@ -1,4 +1,5 @@
 #include "db/db_manager.hpp"
+#include "db/migrations.hpp"
 #include <gtest/gtest.h>
 
 class DbManagerTest : public ::testing::Test {
@@ -54,4 +55,15 @@ TEST_F(DbManagerTest, PreparedQueriesPreserveQuotedValuesAndRollback) {
   EXPECT_TRUE(db_mgr.query("SELECT * FROM fencers").empty());
   EXPECT_THROW(db_mgr.query("SELECT ?"), std::invalid_argument);
   EXPECT_THROW(db_mgr.query("SELECT missing FROM fencers"), std::runtime_error);
+}
+
+TEST_F(DbManagerTest, DomainMigrationIsRepeatableAndPreservesLegacyRecords) {
+  DbManager db(":memory:");
+  auto id = db.get_storage().insert(Fencer{0, "Demo", "Legacy", 2000});
+  migrate_tracker(db);
+  EXPECT_EQ(db.get_storage().get<Fencer>(id).last_name, "Legacy");
+  EXPECT_EQ(db.query("PRAGMA foreign_keys")[0].at("foreign_keys"), "1");
+  EXPECT_THROW(db.query("INSERT INTO aliases VALUES(999,'Unknown')"), std::runtime_error);
+  db.query("PRAGMA user_version = 99");
+  EXPECT_THROW(migrate_tracker(db), std::runtime_error);
 }

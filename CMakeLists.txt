@@ -35,6 +35,7 @@ add_executable(${PROJECT_NAME}
   src/handlers/base.cpp
   src/handlers/fencers.cpp
   src/db/db_manager.cpp
+  src/db/migrations.cpp
   src/db/repos/base.cpp
   src/db/repos/fencers.cpp
 )
