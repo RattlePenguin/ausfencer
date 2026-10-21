@@ -32,7 +32,8 @@ void Server::setup() {
   for (const auto &asset : std::vector<std::pair<std::string,std::string>>{
        {"/","index.html"},{"/styles.css","styles.css"},{"/app.js","app.js"},{"/ui.js","ui.js"},
        {"/profiles.js","profiles.js"},{"/events.js","events.js"},
-       {"/forms.js","forms.js"},{"/account.js","account.js"},{"/contribute.js","contribute.js"}}) {
+       {"/forms.js","forms.js"},{"/account.js","account.js"},{"/contribute.js","contribute.js"},
+       {"/moderation.js","moderation.js"}}) {
     app_->route_dynamic(asset.first)([name=asset.second] {
       std::ifstream file("web/" + name);
       if (!file) return crow::response(404);
