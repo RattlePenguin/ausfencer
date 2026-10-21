@@ -48,6 +48,7 @@ crow::json::wvalue WorkflowHandler::action(const crow::request &req, const std::
   else if (name == "review-privacy") profiles.review_privacy(token,body.integer("id"),body.boolean("approved"));
   else if (name == "logout") AccountRepo(db_).logout(token);
   else if (name == "report") result["id"] = ResultRepo(db_).report(token,body.integer("bout"),body.text("kind"),body.text("detail"));
+  else if (name == "reject-report") ResultRepo(db_).reject_report(token,body.integer("id"),body.text("reason"));
   else if (name == "correct-identity") ResultRepo(db_).correct_identity(token,body.integer("bout"),body.integer("revision"),
     body.text("side"),body.integer("fencer"),body.text("reason"));
   else if (name == "correct") ResultRepo(db_).correct(token,body.integer("bout"),body.integer("revision"),

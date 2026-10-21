@@ -11,7 +11,7 @@ export function moderation(data, refresh) {
     }));
     view.append(card);
   }
-  view.append(el('h2', 'Result review'), table(['Record', 'Problem', 'Evidence', 'Review'], data.result_queue.map(item => [
+  view.append(el('h2', 'Result review'), table(['Record', 'Problem', 'Evidence', 'Review', 'Reject'], data.result_queue.map(item => [
     link('Bout', `#bout/${item.bout}`), item.kind, item.detail, button('Review current record', async () => {
       const [bout] = await api(`tracker/bouts/${item.bout}`);
       if (item.kind === 'identity') {
@@ -36,6 +36,10 @@ export function moderation(data, refresh) {
         await act('correct', {...values, bout: Number(bout.id), revision: Number(bout.revision)}); await refresh();
       }, true);
       view.append(panel); panel.scrollIntoView({block: 'center'});
+    }), button('Reject report', () => {
+      view.append(actionForm('Reject report with reason', [['reason', 'Review evidence and reason']], async values => {
+        await act('reject-report', {...values, id: Number(item.id)}); await refresh();
+      }, true));
     })
   ])));
 }

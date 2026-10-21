@@ -8,6 +8,7 @@ class ResultRepo {
 public:
   explicit ResultRepo(std::shared_ptr<DbManager> db) : db_(std::move(db)) {}
   int report(const std::string &token, int bout, const std::string &kind, const std::string &detail);
+  void reject_report(const std::string &token, int report, const std::string &reason);
   DbRows reports(const std::string &token, bool queue = false);
   DbRows contributions(const std::string &token);
   int submit(const std::string &token, const std::string &operation, CompetitionBout bout,

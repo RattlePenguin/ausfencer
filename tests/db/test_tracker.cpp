@@ -393,3 +393,17 @@ TEST_F(TrackerTest, CompletePilotConservesScoresAndHasConsistentAdvancement) {
   EXPECT_EQ(round("SF",true),round("F",false));
   EXPECT_EQ(round("F",true),std::set<int>{107});
 }
+
+TEST_F(TrackerTest, RejectingIncorrectReportsRestoresStatisticsWithoutChangingParticipants) {
+  auto db=std::make_shared<DbManager>(":memory:");
+  FixtureRepo(db).import_fixture(load_fixture(FIXTURE_DIR),true);
+  AccountRepo accounts(db); ResultRepo results(db);
+  auto member=accounts.create_demo_session("Reporter","member");
+  auto moderator=accounts.create_demo_session("Reviewer","moderator");
+  auto report=results.report(member,1,"identity","Mistaken identity report");
+  EXPECT_THROW(results.reject_report(member,report,"Reason"),std::domain_error);
+  results.reject_report(moderator,report,"Evidence confirms the existing association");
+  EXPECT_EQ(results.reports(member)[0].at("state"),"rejected");
+  EXPECT_EQ(calculate_statistics(TrackerRepo(db).history(101)).wins,8);
+  EXPECT_EQ(db->query("SELECT * FROM revisions").size(),1u);
+}
