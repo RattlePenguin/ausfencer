@@ -7,6 +7,8 @@
 
 class FencerHandler : public BaseHandler {
   std::shared_ptr<FencerRepo> repo_;
+  std::string write_token_;
+  bool can_write(const crow::request &req) const;
 
   // Returns all fencers, capped by pagination and limits
   // req url params: q, page, limit
@@ -30,6 +32,7 @@ class FencerHandler : public BaseHandler {
   crow::response remove(int id);
 
 public:
-  FencerHandler(const std::string &basePath, std::shared_ptr<FencerRepo>);
+  FencerHandler(const std::string &basePath, std::shared_ptr<FencerRepo>,
+                std::string write_token = "");
   void register_routes(App &app) override;
 };

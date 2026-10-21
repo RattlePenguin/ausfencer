@@ -16,7 +16,7 @@ protected:
   void SetUp() override {
     db_mgr_ = std::make_shared<DbManager>(":memory:");
     repo_ = std::make_shared<FencerRepo>(db_mgr_);
-    handler_ = std::make_shared<FencerHandler>("/api/fencers", repo_);
+    handler_ = std::make_shared<FencerHandler>("/api/fencers", repo_, "test-admin");
     app_ = std::make_unique<App>();
     handler_->register_routes(*app_);
     app_->validate();
@@ -28,6 +28,7 @@ protected:
     req.url = url;
     req.method = method;
     req.body = body;
+    req.add_header("Authorization", "Bearer test-admin");
 
     crow::response res;
     app_->handle_full(req, res);
@@ -43,6 +44,18 @@ TEST_F(FencerHandlerTest, GetAllEmptyList) {
   ASSERT_TRUE(json);
   EXPECT_TRUE(json.has("fencers"));
   EXPECT_EQ(json["fencers"].size(), 0u);
+}
+
+TEST_F(FencerHandlerTest, RejectsUnauthorisedWritesBeforeReadingPayload) {
+  for (auto method : {crow::HTTPMethod::POST,crow::HTTPMethod::PUT,crow::HTTPMethod::DELETE}) {
+    crow::request req;
+    req.url = method == crow::HTTPMethod::POST ? "/api/fencers" : "/api/fencers/1";
+    req.method = method;
+    crow::response res;
+    app_->handle_full(req,res);
+    EXPECT_EQ(res.code, 403);
+  }
+  EXPECT_TRUE(repo_->get_all("",1,10).empty());
 }
 
 TEST_F(FencerHandlerTest, CreateFencerSuccess) {

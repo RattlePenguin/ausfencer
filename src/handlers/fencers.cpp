@@ -6,12 +6,20 @@
 #include <crow/json.h>
 #include <exception>
 #include <memory>
+#include <openssl/crypto.h>
 
 FencerHandler::FencerHandler(const std::string &basePath,
-                             std::shared_ptr<FencerRepo> repo)
-    : BaseHandler(basePath), repo_{repo} {
+                             std::shared_ptr<FencerRepo> repo, std::string write_token)
+    : BaseHandler(basePath), repo_{repo}, write_token_{std::move(write_token)} {
   this->name_ = "FencerHandler";
 };
+
+bool FencerHandler::can_write(const crow::request &req) const {
+  auto supplied = req.get_header_value("Authorization");
+  auto expected = "Bearer " + write_token_;
+  return !write_token_.empty() && supplied.size() == expected.size() &&
+         CRYPTO_memcmp(supplied.data(), expected.data(), expected.size()) == 0;
+}
 
 crow::response FencerHandler::get_all(const crow::request &req) {
   auto q_param = req.url_params.get("q") ? req.url_params.get("q") : "";
@@ -139,16 +147,21 @@ void FencerHandler::register_routes(App &app) {
 
   app.route_dynamic(this->basePath_)
       .methods(crow::HTTPMethod::POST)(
-          [this](const crow::request &req) { return this->create(req); });
+          [this](const crow::request &req) {
+            if (!can_write(req)) return crow::response(403);
+            return this->create(req);
+          });
 
   app.route_dynamic(this->basePath_ + "/<int>")
       .methods(crow::HTTPMethod::PUT)([this](const crow::request &req, int id) {
+        if (!can_write(req)) return crow::response(403);
         return this->update(id, req);
       });
 
   app.route_dynamic(this->basePath_ + "/<int>")
       .methods(crow::HTTPMethod::DELETE)(
           [this](const crow::request &req, int id) {
+            if (!can_write(req)) return crow::response(403);
             return this->remove(id);
           });
 }

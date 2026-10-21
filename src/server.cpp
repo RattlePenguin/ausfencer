@@ -4,6 +4,7 @@
 #include <crow/logging.h>
 #include <crow/middlewares/cors.h>
 #include <memory>
+#include <cstdlib>
 
 Server::Server(const ServerConfig &config) : config_{config} {
   // Gives logs for given class and above
@@ -25,8 +26,9 @@ Server::Server(const ServerConfig &config) : config_{config} {
 }
 
 void Server::setup() {
+  const char *token = std::getenv("AUSFENCER_ADMIN_TOKEN");
   this->add_handler(std::make_shared<FencerHandler>(
-      "/api/fencers", std::make_shared<FencerRepo>(this->db_mgr_)));
+      "/api/fencers", std::make_shared<FencerRepo>(this->db_mgr_), token ? token : ""));
 }
 
 void Server::start() {
