@@ -360,3 +360,16 @@ TEST_F(TrackerTest, PlacingsRemainAvailableWhenBoutCoverageIsMissing) {
   db->query("UPDATE profiles SET visible=0 WHERE fencer_id=101");
   EXPECT_TRUE(tracker.profile_events(101).empty());
 }
+
+TEST_F(TrackerTest, FixtureImportsLinkMatchingCommunityResultsWithoutDoubleCounting) {
+  auto db=std::make_shared<DbManager>(":memory:");
+  auto complete=load_fixture(FIXTURE_DIR), partial=complete;
+  partial.bouts.erase(partial.bouts.begin());
+  FixtureRepo fixtures(db); fixtures.import_fixture(partial,true);
+  auto token=AccountRepo(db).create_demo_session("Contributor","member");
+  ResultRepo(db).submit(token,"missing-poule-bout",complete.bouts[0],"Fictional evidence");
+  fixtures.import_fixture(complete,true); fixtures.import_fixture(complete,true);
+  EXPECT_EQ(db->query("SELECT * FROM bouts").size(),44u);
+  EXPECT_EQ(calculate_statistics(TrackerRepo(db).history(101)).scored,72);
+  EXPECT_EQ(db->query("SELECT * FROM bouts WHERE trust='community'").size(),1u);
+}
