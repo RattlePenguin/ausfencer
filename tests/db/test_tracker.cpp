@@ -14,3 +14,16 @@ TEST_F(TrackerTest, LoadsVersionedSyntheticFixture) {
   EXPECT_EQ(load_fixture(FIXTURE_DIR).checksum, data.checksum);
   EXPECT_THROW(load_fixture("missing-fixture-directory"), std::invalid_argument);
 }
+
+TEST_F(TrackerTest, RejectsInvalidReferencesScoresAndDates) {
+  auto data = load_fixture(FIXTURE_DIR);
+  EXPECT_NO_THROW(validate_fixture(data));
+  data.bouts[0].right = 999;
+  EXPECT_THROW(validate_fixture(data), std::invalid_argument);
+  data = load_fixture(FIXTURE_DIR); data.bouts[0].left_score = 100;
+  EXPECT_THROW(validate_fixture(data), std::invalid_argument);
+  data = load_fixture(FIXTURE_DIR); data.events[0].date = "2026-02-30";
+  EXPECT_THROW(validate_fixture(data), std::invalid_argument);
+  data = load_fixture(FIXTURE_DIR); data.fencers[1].id = data.fencers[0].id;
+  EXPECT_THROW(validate_fixture(data), std::invalid_argument);
+}
