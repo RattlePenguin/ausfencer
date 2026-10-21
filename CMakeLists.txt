@@ -8,6 +8,7 @@ include(FetchContent)
 
 find_package(Crow REQUIRED)
 find_package(SQLite3 REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 FetchContent_Declare(
   sqlite_orm
@@ -15,6 +16,10 @@ FetchContent_Declare(
   GIT_TAG        5f1a2ce84a3d72711b4f0a440fdaba977868ae67
 )
 FetchContent_MakeAvailable(sqlite_orm)
+
+add_library(tracker_domain src/services/fixtures.cpp)
+target_include_directories(tracker_domain PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(tracker_domain PUBLIC Crow::Crow sqlite_orm::sqlite_orm SQLite3::SQLite3 OpenSSL::Crypto)
 
 find_package(GTest QUIET)
 if(NOT GTest_FOUND)
@@ -41,6 +46,7 @@ add_executable(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
+  tracker_domain
   Crow::Crow
   sqlite_orm::sqlite_orm
   SQLite3::SQLite3
