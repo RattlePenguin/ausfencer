@@ -74,3 +74,21 @@ TEST_F(TrackerTest, SearchesUnicodeAliasesDuplicateNamesAndBoundedPages) {
   EXPECT_THROW(repo.search("",1,101), std::invalid_argument);
   EXPECT_TRUE(repo.profile(112).empty());
 }
+
+TEST_F(TrackerTest, EventEntriesRedactSourceNamesAndHistoricalAffiliations) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  FixtureRepo fixtures(db);
+  fixtures.import_fixture(load_fixture(FIXTURE_DIR), true);
+  TrackerRepo repo(db);
+  EXPECT_EQ(repo.events().size(), 4u);
+  db->query("UPDATE profiles SET visible=0 WHERE fencer_id=101");
+  auto entries = repo.event_entries("epee-2025");
+  ASSERT_EQ(entries.size(), 2u);
+  EXPECT_EQ(entries[0].at("name"), "Private fencer");
+  EXPECT_EQ(entries[0].count("id"), 0u);
+  EXPECT_TRUE(entries[0].at("source_name").empty());
+  EXPECT_TRUE(entries[0].at("club").empty());
+  fixtures.import_fixture(load_fixture(FIXTURE_DIR), true);
+  EXPECT_TRUE(repo.search("M. Vale").empty());
+  EXPECT_TRUE(repo.profile(101).empty());
+}
