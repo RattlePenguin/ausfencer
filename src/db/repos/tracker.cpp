@@ -1,27 +1,13 @@
 #include "db/repos/tracker.hpp"
-#include <unicode/normalizer2.h>
-#include <unicode/unistr.h>
+#include "services/names.hpp"
 #include <sstream>
 #include <stdexcept>
-
-namespace {
-std::string fold(const std::string &input) {
-  UErrorCode status = U_ZERO_ERROR;
-  auto normalizer = icu::Normalizer2::getNFKCCasefoldInstance(status);
-  icu::UnicodeString output;
-  if (U_FAILURE(status)) throw std::runtime_error("Unicode normalizer unavailable");
-  normalizer->normalize(icu::UnicodeString::fromUTF8(input), output, status);
-  if (U_FAILURE(status)) throw std::invalid_argument("Invalid Unicode name");
-  std::string result;
-  return output.toUTF8String(result);
-}
-}
 
 DbRows TrackerRepo::search(const std::string &query, int page, int limit) {
   if (query.size() > 200 || page < 1 || page > 1000000 || limit < 1 || limit > 100)
     throw std::invalid_argument("Invalid search pagination or query length");
   std::vector<std::string> tokens;
-  std::istringstream words(fold(query));
+  std::istringstream words(fold_name(query));
   for (std::string word; words >> word;) tokens.push_back(word);
   auto lock = db_->acquire_lock();
   auto rows = db_->query(R"(SELECT p.fencer_id AS id,p.name,p.club,p.state,p.country,
@@ -30,7 +16,7 @@ DbRows TrackerRepo::search(const std::string &query, int page, int limit) {
   DbRows result;
   size_t skipped = 0, offset = static_cast<size_t>(page - 1) * limit;
   for (auto &row : rows) {
-    auto names = fold(row.at("name") + " " + row.at("aliases"));
+    auto names = fold_name(row.at("name") + " " + row.at("aliases"));
     bool matches = true;
     for (const auto &token : tokens) if (names.find(token) == std::string::npos) matches = false;
     if (!matches || skipped++ < offset) continue;

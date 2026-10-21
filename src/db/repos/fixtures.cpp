@@ -1,9 +1,22 @@
 #include "db/repos/fixtures.hpp"
 #include "services/fixtures.hpp"
+#include "services/names.hpp"
 
 void FixtureRepo::write_context(const FixtureData &data) {
   for (const auto &p : data.fencers) {
     auto id = std::to_string(p.id);
+    auto external = db_->query("SELECT fencer_id FROM external_ids WHERE issuer='ausfencer-demo-v1' AND value=?", {p.external_id});
+    if (!external.empty() && external[0].at("fencer_id") != id)
+      throw std::invalid_argument("External identity already linked; identity review required");
+    if (external.empty() && db_->query("SELECT 1 FROM profiles WHERE fencer_id=?", {id}).empty()) {
+      auto suppressed = db_->query(R"(SELECT name FROM profiles WHERE visible=0 UNION
+        SELECT a.name FROM aliases a JOIN profiles p ON p.fencer_id=a.fencer_id WHERE p.visible=0)");
+      for (const auto &record : suppressed) {
+        auto name = fold_name(record.at("name"));
+        if (name == fold_name(p.name) || (!p.alias.empty() && name == fold_name(p.alias)))
+          throw std::invalid_argument("Possible suppressed identity; private identity review required");
+      }
+    }
     db_->query("INSERT INTO fencers(id,first_name,last_name,birth_year) VALUES(?,?,'',0) ON CONFLICT(id) DO NOTHING",
                {id,p.name});
     db_->query("INSERT INTO profiles VALUES(?,?,?,?,?,?,?) ON CONFLICT(fencer_id) DO NOTHING",

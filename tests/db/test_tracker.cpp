@@ -332,3 +332,16 @@ TEST_F(TrackerTest, ReviewedIdentityCorrectionsUpdateBothHistoriesAndPreserveEvi
   EXPECT_EQ(results.reports(token)[0].at("state"),"resolved");
   EXPECT_THROW(results.correct_identity(token,1,0,"right",101,"Stale"),std::domain_error);
 }
+
+TEST_F(TrackerTest, ChangedSourceIdsCannotRecreateSuppressedIdentities) {
+  auto db=std::make_shared<DbManager>(":memory:");
+  FixtureRepo fixtures(db); auto data=load_fixture(FIXTURE_DIR); fixtures.import_fixture(data,true);
+  db->query("UPDATE profiles SET visible=0 WHERE fencer_id=101");
+  auto replacement=data.fencers[0]; replacement.id=113;
+  data.fencers={replacement}; data.entries.clear(); data.bouts.clear();
+  EXPECT_THROW(fixtures.import_fixture(data,true),std::invalid_argument);
+  data.fencers[0].external_id="DEMO-113"; data.fencers[0].name="ＭＩＲＡ　ＶＡＬＥ";
+  EXPECT_THROW(fixtures.import_fixture(data,true),std::invalid_argument);
+  EXPECT_TRUE(TrackerRepo(db).profile(113).empty());
+  EXPECT_TRUE(TrackerRepo(db).search("M. Vale").empty());
+}
