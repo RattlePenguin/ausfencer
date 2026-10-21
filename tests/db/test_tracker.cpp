@@ -313,3 +313,18 @@ TEST_F(TrackerTest, ProfileRouteReturnsKnownTotalsAndHidesPrivateRecords) {
   req.url="/api/tracker/fencers/112"; response=crow::response();
   app.handle_full(req,response); EXPECT_EQ(response.code,404);
 }
+
+TEST_F(TrackerTest, ReviewedIdentityCorrectionsUpdateBothHistoriesAndPreserveEvidence) {
+  auto db=std::make_shared<DbManager>(":memory:");
+  auto data=load_fixture(FIXTURE_DIR); data.bouts.resize(1);
+  FixtureRepo fixtures(db); fixtures.import_fixture(data,true);
+  auto token=AccountRepo(db).create_demo_session("Reviewer","moderator");
+  ResultRepo results(db); results.report(token,1,"identity","Fictional wrong participant");
+  results.correct_identity(token,1,0,"left",103,"Reviewed fictional identity evidence");
+  EXPECT_TRUE(TrackerRepo(db).history(101).empty());
+  EXPECT_EQ(calculate_statistics(TrackerRepo(db).history(103)).wins,1);
+  fixtures.import_fixture(data,true);
+  EXPECT_TRUE(TrackerRepo(db).history(101).empty());
+  EXPECT_EQ(results.reports(token)[0].at("state"),"resolved");
+  EXPECT_THROW(results.correct_identity(token,1,0,"right",101,"Stale"),std::domain_error);
+}

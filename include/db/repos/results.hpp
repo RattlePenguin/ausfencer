@@ -15,4 +15,6 @@ public:
   void correct(const std::string &token, int bout, int revision, std::optional<int> left,
                std::optional<int> right, const std::string &winner_side,
                const std::string &status, const std::string &reason);
+  void correct_identity(const std::string &token, int bout, int revision, const std::string &side,
+                        int fencer, const std::string &reason);
 };
