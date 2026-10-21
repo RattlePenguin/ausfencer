@@ -6,6 +6,11 @@
 #include <sqlite3.h>
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
+#include <map>
+#include <vector>
+
+using DbRow = std::map<std::string, std::string>;
+using DbRows = std::vector<DbRow>;
 
 namespace sql = sqlite_orm;
 
@@ -25,7 +30,12 @@ inline auto create_db_storage(const std::string &db_name) {
                       sql::make_column("birth_year", &Fencer::birth_year)));
 }
 
-using Storage = decltype(create_db_storage(""));
+class Storage : public decltype(create_db_storage("")) {
+  using Base = decltype(create_db_storage(""));
+public:
+  explicit Storage(Base storage) : Base(std::move(storage)) {}
+  sqlite3 *connection() { return this->get_connection().get(); }
+};
 
 class DbManager {
   std::string db_name_;
@@ -37,6 +47,10 @@ public:
   ~DbManager() = default;
 
   Storage &get_storage() { return storage_; }
+
+  // Callers hold acquire_lock() for the entire operation or transaction.
+  DbRows query(const std::string &statement,
+               const std::vector<std::string> &parameters = {});
 
   // Acquires the mutex lock on db mgr.
   // locking the mutex is a mutating operation,

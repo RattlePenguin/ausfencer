@@ -42,3 +42,16 @@ TEST_F(DbManagerTest, ConcurrentLockAcquisition) {
     EXPECT_TRUE(lock2.owns_lock());
   }
 }
+
+TEST_F(DbManagerTest, PreparedQueriesPreserveQuotedValuesAndRollback) {
+  DbManager db_mgr(":memory:");
+  auto lock = db_mgr.acquire_lock();
+  db_mgr.query("BEGIN");
+  db_mgr.query("INSERT INTO fencers(first_name,last_name,birth_year) VALUES(?,?,?)",
+               {"D'Arcy", "Demo", "2000"});
+  EXPECT_EQ(db_mgr.query("SELECT first_name FROM fencers")[0].at("first_name"), "D'Arcy");
+  db_mgr.query("ROLLBACK");
+  EXPECT_TRUE(db_mgr.query("SELECT * FROM fencers").empty());
+  EXPECT_THROW(db_mgr.query("SELECT ?"), std::invalid_argument);
+  EXPECT_THROW(db_mgr.query("SELECT missing FROM fencers"), std::runtime_error);
+}
