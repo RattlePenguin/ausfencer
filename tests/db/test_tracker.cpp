@@ -190,3 +190,22 @@ TEST_F(TrackerTest, ClaimsRequireEvidenceAndIndependentReview) {
   auto own = profiles.request_claim(reviewer,107,"self","Evidence","");
   EXPECT_THROW(profiles.review_claim(reviewer,own,true), std::domain_error);
 }
+
+TEST_F(TrackerTest, GuardianPublicationAndWithdrawalPersistAcrossReimports) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  FixtureRepo fixtures(db); fixtures.import_fixture(load_fixture(FIXTURE_DIR), true);
+  AccountRepo accounts(db); ProfileRepo profiles(db); TrackerRepo tracker(db);
+  auto guardian = accounts.create_demo_session("Parent","member");
+  auto reviewer = accounts.create_demo_session("Reviewer","moderator");
+  EXPECT_THROW(profiles.set_visibility(guardian,112,true), std::domain_error);
+  auto claim = profiles.request_claim(guardian,112,"guardian","Fictional authority declaration","demo-v1");
+  profiles.review_claim(reviewer,claim,true); profiles.set_visibility(guardian,112,true);
+  EXPECT_EQ(tracker.profile(112).size(), 1u);
+  profiles.withdraw(guardian,112);
+  EXPECT_TRUE(tracker.profile(112).empty());
+  fixtures.import_fixture(load_fixture(FIXTURE_DIR), true);
+  EXPECT_TRUE(tracker.search("Noor").empty());
+  EXPECT_THROW(profiles.set_visibility(guardian,112,true), std::domain_error);
+  EXPECT_EQ(profiles.claims(guardian)[0].at("state"), "withdrawn");
+  EXPECT_EQ(db->query("SELECT * FROM profile_audit").size(), 2u);
+}

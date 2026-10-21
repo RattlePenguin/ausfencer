@@ -31,3 +31,32 @@ void ProfileRepo::review_claim(const std::string &token, int claim, bool approve
   db_->query("UPDATE claims SET state=?,reviewer=?,updated_at=CURRENT_TIMESTAMP WHERE id=?",
              {approved ? "approved" : "rejected",actor.at("id"),std::to_string(claim)});
 }
+
+void ProfileRepo::change_visibility(const std::string &token, int fencer, bool visible, bool withdraw) {
+  auto actor = AccountRepo(db_).authenticate(token);
+  if (actor.empty()) throw std::domain_error("Sign in required");
+  auto lock = db_->acquire_lock();
+  db_->query("BEGIN IMMEDIATE");
+  try {
+    auto id = std::to_string(fencer);
+    auto grants = db_->query(R"(SELECT 1 FROM claims WHERE account_id=? AND fencer_id=?
+      AND state='approved' AND (kind='self' OR consent_version='demo-v1'))", {actor.at("id"),id});
+    if (grants.empty()) throw std::domain_error("Approved profile management grant required");
+    db_->query(R"(INSERT INTO profile_audit(fencer_id,actor,reason,before_visible,after_visible)
+      SELECT fencer_id,?,?,visible,? FROM profiles WHERE fencer_id=?)",
+      {actor.at("id"),withdraw ? "consent withdrawn" : "visibility changed",visible ? "1" : "0",id});
+    db_->query("UPDATE profiles SET visible=? WHERE fencer_id=?", {visible ? "1" : "0",id});
+    if (withdraw) db_->query("UPDATE claims SET state='withdrawn',updated_at=CURRENT_TIMESTAMP WHERE account_id=? AND fencer_id=?",
+                            {actor.at("id"),id});
+    db_->query("COMMIT");
+  } catch (...) { db_->query("ROLLBACK"); throw; }
+}
+
+DbRows ProfileRepo::claims(const std::string &token) {
+  auto actor = AccountRepo(db_).authenticate(token);
+  if (actor.empty()) throw std::domain_error("Sign in required");
+  auto lock = db_->acquire_lock();
+  return db_->query(R"(SELECT c.id,c.fencer_id,c.kind,c.state,c.consent_version,c.updated_at,
+    CASE WHEN c.state='approved' THEN p.name ELSE 'Pending profile' END AS name,p.visible
+    FROM claims c JOIN profiles p ON p.fencer_id=c.fencer_id WHERE c.account_id=? ORDER BY c.id)", {actor.at("id")});
+}
