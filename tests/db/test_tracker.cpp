@@ -8,6 +8,7 @@
 #include "db/repos/profiles.hpp"
 #include "db/repos/results.hpp"
 #include <gtest/gtest.h>
+#include <set>
 
 class TrackerTest : public ::testing::Test {};
 
@@ -358,4 +359,37 @@ TEST_F(TrackerTest, ContributionRateLimitsAllowSafeRetries) {
   EXPECT_THROW(results.submit(token,"excess",data.bouts[0],""),std::domain_error);
   EXPECT_NO_THROW(results.submit(token,"operation-0",data.bouts[0],""));
   EXPECT_EQ(db->query("SELECT * FROM bouts").size(),44u);
+}
+
+TEST_F(TrackerTest, CompletePilotConservesScoresAndHasConsistentAdvancement) {
+  auto db=std::make_shared<DbManager>(":memory:");
+  auto data=load_fixture(FIXTURE_DIR); FixtureRepo(db).import_fixture(data,true);
+  db->query("UPDATE profiles SET visible=1");
+  TrackerRepo tracker(db); TrackerFilter filter; filter.year="2026"; filter.weapon="epee";
+  int wins=0,losses=0,scored=0,received=0;
+  const int places[]={2,3,5,7,9,11,1,3,6,8,10,12};
+  for (int id=101;id<=112;++id) {
+    auto stats=calculate_statistics(tracker.history(id,filter));
+    wins+=stats.wins; losses+=stats.losses; scored+=stats.scored; received+=stats.received;
+    TrackerFilter pools=filter; pools.stage="pool";
+    auto pool=calculate_statistics(tracker.history(id,pools));
+    EXPECT_EQ(pool.wins+pool.losses,5);
+  }
+  EXPECT_EQ(wins,41); EXPECT_EQ(losses,41); EXPECT_EQ(scored,489); EXPECT_EQ(received,489);
+  for (const auto &entry : data.entries)
+    if (entry.event=="epee-2026") EXPECT_EQ(entry.place,places[entry.fencer-101]);
+  auto round = [&](const std::string &stage, bool winners) {
+    std::set<int> result;
+    for (const auto &bout : data.bouts) if (bout.event=="epee-2026" && bout.stage==stage) {
+      if (winners) result.insert(*bout.winner);
+      else { result.insert(bout.left); result.insert(bout.right); }
+    }
+    return result;
+  };
+  auto qualified=round("R16",true);
+  for (const auto &entry : data.entries) if (entry.event=="epee-2026" && entry.bye) qualified.insert(entry.fencer);
+  EXPECT_EQ(qualified,round("QF",false));
+  EXPECT_EQ(round("QF",true),round("SF",false));
+  EXPECT_EQ(round("SF",true),round("F",false));
+  EXPECT_EQ(round("F",true),std::set<int>{107});
 }
