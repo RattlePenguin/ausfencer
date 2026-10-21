@@ -92,3 +92,19 @@ TEST_F(TrackerTest, EventEntriesRedactSourceNamesAndHistoricalAffiliations) {
   EXPECT_TRUE(repo.search("M. Vale").empty());
   EXPECT_TRUE(repo.profile(101).empty());
 }
+
+TEST_F(TrackerTest, HistoriesUseCanonicalScoresAndRedactHiddenOpponents) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  FixtureRepo(db).import_fixture(load_fixture(FIXTURE_DIR), true);
+  TrackerRepo repo(db);
+  EXPECT_EQ(repo.history(101).size(), 9u);
+  EXPECT_EQ(repo.history(107).size(), 9u);
+  EXPECT_EQ(repo.event_bouts("epee-2026").size(), 41u);
+  db->query("UPDATE profiles SET visible=0 WHERE fencer_id=101");
+  EXPECT_TRUE(repo.history(101).empty());
+  auto history = repo.history(107);
+  EXPECT_EQ(history.back().at("left_name"), "Private fencer");
+  EXPECT_EQ(history.back().count("left_id"), 0u);
+  EXPECT_EQ(history.back().at("received"), "5");
+  EXPECT_TRUE(repo.bout(99999).empty());
+}
