@@ -1,0 +1,18 @@
+# Automatically run local commands within the filesystem permissions below.
+approval_policy = "never"
+default_permissions = "ausfencer-workspace"
+
+# Use a custom profile so Git metadata is writable without unsandboxed rules.
+# The absolute path deliberately excludes the parent directory and /tmp.
+[permissions.ausfencer-workspace.filesystem]
+":root" = "read"
+
+[permissions.ausfencer-workspace.filesystem."/home/duckye/Projects/ausfencer"]
+"." = "write"
+".git" = "write"
+".codex" = "write"
+".agents" = "write"
+".aws" = "write"
+
+[permissions.ausfencer-workspace.network]
+enabled = false
