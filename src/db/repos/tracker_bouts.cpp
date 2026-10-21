@@ -16,12 +16,15 @@ DbRows TrackerRepo::read_bouts(int person, const std::string &event, const Track
     CASE WHEN l.visible=1 THEN l.name ELSE 'Private fencer' END AS left_name,
     CASE WHEN r.visible=1 THEN r.name ELSE 'Private fencer' END AS right_name,
     b.left_score,b.right_score,
+    le.seed AS left_seed,re.seed AS right_seed,
     CASE WHEN b.winner_id=b.left_id THEN 'left' WHEN b.winner_id=b.right_id THEN 'right' END AS winner_side,
     CASE WHEN b.left_id=? THEN b.left_score ELSE b.right_score END AS scored,
     CASE WHEN b.left_id=? THEN b.right_score ELSE b.left_score END AS received,
     CASE WHEN b.winner_id=? THEN 'win' ELSE 'loss' END AS result
     FROM bouts b JOIN events e ON e.id=b.event_id JOIN sources s ON s.id=b.source_id
     JOIN profiles l ON l.fencer_id=b.left_id JOIN profiles r ON r.fencer_id=b.right_id
+    JOIN entries le ON le.event_id=b.event_id AND le.fencer_id=b.left_id
+    JOIN entries re ON re.event_id=b.event_id AND re.fencer_id=b.right_id
     WHERE (?='0' OR ((b.left_id=? OR b.right_id=?) AND
       EXISTS(SELECT 1 FROM profiles WHERE fencer_id=? AND visible=1))))";
   auto clause = [&](const std::string &sql, const std::string &value) {
