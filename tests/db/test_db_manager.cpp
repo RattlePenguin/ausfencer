@@ -67,3 +67,12 @@ TEST_F(DbManagerTest, DomainMigrationIsRepeatableAndPreservesLegacyRecords) {
   db.query("PRAGMA user_version = 99");
   EXPECT_THROW(migrate_tracker(db), std::runtime_error);
 }
+
+TEST_F(DbManagerTest, BoutsRequireEntriesAndValidScores) {
+  DbManager db(":memory:");
+  db.query("INSERT INTO sources(id,basis,parser_version,checksum) VALUES('demo','synthetic','1','test')");
+  EXPECT_THROW(db.query(R"(INSERT INTO bouts(id,event_id,round,pool,left_id,right_id,
+    left_score,right_score,winner_id,status,trust,source_id)
+    VALUES('test','missing','F','',1,2,15,10,1,'completed','synthetic','demo'))"), std::runtime_error);
+  EXPECT_TRUE(db.query("SELECT * FROM bouts").empty());
+}
