@@ -58,9 +58,11 @@ TEST_F(TrackerTest, ImportsBothPerspectivesOnceAndRollsBackConflicts) {
   auto mirror = data.bouts[0];
   std::swap(mirror.left,mirror.right); std::swap(mirror.left_score,mirror.right_score);
   data.bouts.push_back(mirror);
+  mirror.id="mirrored-matrix-observation";
+  data.bouts.push_back(mirror);
   repo.import_fixture(data, true); repo.import_fixture(data, true);
   EXPECT_EQ(db->query("SELECT * FROM bouts").size(), 44u);
-  EXPECT_EQ(db->query("SELECT * FROM observations").size(), 44u);
+  EXPECT_EQ(db->query("SELECT * FROM observations").size(), 45u);
   auto changed = load_fixture(FIXTURE_DIR);
   changed.bouts[0].left_score = 4;
   EXPECT_THROW(repo.import_fixture(changed, true), std::invalid_argument);
@@ -355,6 +357,8 @@ TEST_F(TrackerTest, ContributionRateLimitsAllowSafeRetries) {
   auto db=std::make_shared<DbManager>(":memory:");
   auto data=load_fixture(FIXTURE_DIR); FixtureRepo(db).import_fixture(data,true);
   auto token=AccountRepo(db).create_demo_session("Contributor","member"); ResultRepo results(db);
+  auto malformed=data.bouts[30]; malformed.pool="other";
+  EXPECT_THROW(results.submit(token,"invalid-context",malformed,""),std::invalid_argument);
   for (int i=0;i<30;++i) results.submit(token,"operation-"+std::to_string(i),data.bouts[0],"");
   EXPECT_THROW(results.submit(token,"excess",data.bouts[0],""),std::domain_error);
   EXPECT_NO_THROW(results.submit(token,"operation-0",data.bouts[0],""));

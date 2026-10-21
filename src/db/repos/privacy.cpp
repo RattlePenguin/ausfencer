@@ -4,6 +4,8 @@ int ProfileRepo::request_privacy(int fencer, const std::string &contact, const s
   if (contact.empty() || contact.size() > 300 || evidence.empty() || evidence.size() > 4000)
     throw std::invalid_argument("Contact and supporting context required");
   auto lock = db_->acquire_lock();
+  if (db_->query("SELECT 1 FROM profiles WHERE fencer_id=?", {std::to_string(fencer)}).empty())
+    throw std::invalid_argument("A valid profile reference is required");
   auto pending = db_->query("SELECT count(*) AS total FROM privacy_requests WHERE fencer_id=? AND contact=? AND state='pending'",
                             {std::to_string(fencer),contact});
   if (std::stoi(pending[0].at("total")) >= 3) throw std::domain_error("A privacy request is already awaiting review");

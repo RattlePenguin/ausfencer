@@ -56,6 +56,7 @@ void validate_fixture(const FixtureData &fixture) {
     require(b.status != "completed" || b.winner.has_value(), "Completed bout needs explicit winner");
     require(b.trust == "synthetic", "Local fixtures must be synthetic");
     require(std::set<std::string>{"pool","R16","QF","SF","F"}.count(b.stage), "Invalid round");
+    require(b.stage == "pool" || b.pool.empty(), "Elimination bouts cannot have a poule");
     require(b.stage != "pool" || (!b.pool.empty() && entries.at({b.event,b.left}) == b.pool &&
       entries.at({b.event,b.right}) == b.pool), "Invalid poule membership");
   }

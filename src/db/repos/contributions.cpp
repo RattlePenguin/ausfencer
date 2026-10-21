@@ -7,7 +7,8 @@ int ResultRepo::submit(const std::string &token, const std::string &operation, C
   auto actor = AccountRepo(db_).authenticate(token);
   if (actor.empty()) throw std::domain_error("Sign in required");
   if (operation.empty() || operation.size()>100 || evidence.size()>4000 || b.left==b.right ||
-      b.status!="completed" || !b.winner || (*b.winner!=b.left && *b.winner!=b.right) ||
+      b.status!="completed" || (b.stage!="pool" && !b.pool.empty()) ||
+      !b.winner || (*b.winner!=b.left && *b.winner!=b.right) ||
       b.left_score.has_value()!=b.right_score.has_value() ||
       (b.left_score && (*b.left_score<0 || *b.left_score>99 || *b.right_score<0 || *b.right_score>99)) ||
       !std::set<std::string>{"pool","R16","QF","SF","F"}.count(b.stage))

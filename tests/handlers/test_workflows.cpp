@@ -13,6 +13,8 @@ TEST_F(WorkflowTest, DeniesAnonymousAndMalformedAuthenticatedActions) {
   crow::response response; app.handle_full(req,response); EXPECT_EQ(response.code,403);
   req.url="/api/actions/privacy"; response=crow::response(); app.handle_full(req,response);
   EXPECT_EQ(response.code,400);
+  req.body=R"({"fencer":999,"contact":"demo@example.invalid","evidence":"Privacy request"})";
+  response=crow::response(); app.handle_full(req,response); EXPECT_EQ(response.code,400);
 }
 
 TEST_F(WorkflowTest, AuthenticatedSubmissionIsRepeatableAndShowsInContributionHistory) {
