@@ -4,11 +4,11 @@
 
 AusFencer is a C++17 HTTP API for fencing club data. Public headers live in `include/`, with implementations in `src/`. Keep HTTP handling in `handlers/`, database access in `db/repos/`, schema and connection management in `db/db_manager.*`, and data structures in `include/models/`. `src/main.cpp` starts the Crow server; `src/server.cpp` wires dependencies and routes.
 
-Tests mirror these layers under `tests/db/` and `tests/handlers/`. `libs/sqlite/` contains bundled SQLite sources; avoid unrelated edits to vendored code. Build output belongs in the ignored `build/` directory. There is no frontend or asset pipeline.
+Tests mirror these layers under `tests/db/` and `tests/handlers/`. `libs/sqlite/` contains bundled SQLite sources; avoid unrelated edits to vendored code. Build output belongs in the ignored `build/` directory. The vanilla frontend lives in `web/`; there is no asset build pipeline.
 
 ## Build, Test, and Development Commands
 
-Install a C++17 compiler, CMake, and development packages discoverable by CMake for Crow, Boost, and SQLite3. Configuration fetches pinned sqlite_orm and GoogleTest revisions, so initial setup requires network access.
+Install a C++17 compiler, CMake, and development packages discoverable by CMake for Crow (with Asio), SQLite3, OpenSSL and ICU. Configuration fetches pinned sqlite_orm and, when not installed, GoogleTest revisions, so initial setup requires network access.
 
 ```sh
 cmake -S . -B build                 # Configure dependencies and targets
@@ -33,4 +33,4 @@ Recent commits use short, lowercase summaries such as `added delete` and `update
 
 ## Local Data
 
-The server creates `db.ausfencer` in its working directory and currently inserts a sample fencer at startup. Keep generated databases and personal data out of commits.
+The default database is `db.ausfencer`; use `--db build/demo.db` for development. Sample data is inserted only by explicit fixture commands. Keep generated databases and personal data out of commits.
