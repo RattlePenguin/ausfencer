@@ -251,3 +251,21 @@ TEST_F(TrackerTest, ReportsPreserveScoresAndExcludeDisputesFromStatistics) {
   EXPECT_EQ(results.reports(token)[0].at("state"), "pending");
   EXPECT_THROW(results.reports(token,true), std::domain_error);
 }
+
+TEST_F(TrackerTest, CorrectionsAreAuditedRejectStaleWritesAndSurviveReimports) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  FixtureRepo fixtures(db); fixtures.import_fixture(load_fixture(FIXTURE_DIR), true);
+  AccountRepo accounts(db); ResultRepo results(db);
+  auto member = accounts.create_demo_session("Reporter","member");
+  auto reviewer = accounts.create_demo_session("Reviewer","moderator");
+  results.report(member,1,"score","Fictional score evidence");
+  EXPECT_THROW(results.correct(member,1,0,4,2,"left","completed","Correction"), std::domain_error);
+  results.correct(reviewer,1,0,4,2,"left","completed","Reviewed fictional evidence");
+  EXPECT_THROW(results.correct(reviewer,1,0,5,2,"left","completed","Stale"), std::domain_error);
+  fixtures.import_fixture(load_fixture(FIXTURE_DIR), true);
+  EXPECT_EQ(calculate_statistics(TrackerRepo(db).history(101)).scored, 71);
+  EXPECT_EQ(results.reports(member)[0].at("state"), "resolved");
+  EXPECT_EQ(db->query("SELECT * FROM revisions").size(), 1u);
+  results.correct(reviewer,1,1,5,2,"left","completed","Reverted after second review");
+  EXPECT_EQ(calculate_statistics(TrackerRepo(db).history(101)).scored, 72);
+}
