@@ -9,6 +9,27 @@ Reimporting must preserve canonical IDs, corrections and profile suppression.
 Reset deletes only a database explicitly marked as this demo dataset; it must
 never erase an arbitrary database. Server startup never inserts sample records.
 
+From the repository root, build the application and run:
+
+```sh
+./build/aus-fencer --db build/demo.db --preview fixtures/demo
+./build/aus-fencer --db build/demo.db --seed fixtures/demo --approve CHECKSUM_FROM_PREVIEW
+./build/aus-fencer --db build/demo.db --demo-account Tester
+./build/aus-fencer --db build/demo.db --demo-account Reviewer --role moderator
+./build/aus-fencer --db build/demo.db
+```
+
+Account creation prints a private demo session token, valid for 24 hours. Use
+it as `Authorization: Bearer TOKEN`; accounts and competitor claims stay separate.
+The demo account command refuses an unseeded/unmarked database. It provides local
+test identities; Google and email-link verification are not implemented yet.
+Legacy fencer writes require the separate `AUSFENCER_ADMIN_TOKEN` environment
+variable and are disabled when it is absent. Public reads never return birth years.
+To start the fictional dataset over, stop the server and replace `--seed` above
+with `--reset-demo`. This explicitly resets results, accounts, claims and privacy
+settings in the marked demo database, while retaining import outcome history.
+Ordinary `--seed` repeats preserve privacy settings and accepted corrections.
+
 ## Complete 2026 individual épée event
 
 Twelve entrants (101–112) fence in poules A (101–106) and B (107–112).
