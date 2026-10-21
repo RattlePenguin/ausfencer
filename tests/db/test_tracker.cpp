@@ -5,6 +5,7 @@
 #include "db/repos/fencers.hpp"
 #include "services/statistics.hpp"
 #include "db/repos/accounts.hpp"
+#include "db/repos/profiles.hpp"
 #include <gtest/gtest.h>
 
 class TrackerTest : public ::testing::Test {};
@@ -172,4 +173,20 @@ TEST_F(TrackerTest, DemoSessionsValidateExpiryAndRevocation) {
   auto moderator = accounts.create_demo_session("Reviewer","moderator");
   accounts.logout(moderator);
   EXPECT_TRUE(accounts.authenticate(moderator).empty());
+}
+
+TEST_F(TrackerTest, ClaimsRequireEvidenceAndIndependentReview) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  FixtureRepo(db).import_fixture(load_fixture(FIXTURE_DIR), true);
+  AccountRepo accounts(db); ProfileRepo profiles(db);
+  auto member = accounts.create_demo_session("Fencer","member");
+  auto reviewer = accounts.create_demo_session("Reviewer","moderator");
+  EXPECT_THROW(profiles.request_claim("",101,"self","Evidence",""), std::domain_error);
+  EXPECT_THROW(profiles.request_claim(member,112,"self","Evidence",""), std::domain_error);
+  EXPECT_THROW(profiles.request_claim(member,112,"guardian","Evidence",""), std::invalid_argument);
+  auto claim = profiles.request_claim(member,101,"self","Fictional identity evidence","");
+  EXPECT_THROW(profiles.review_claim(member,claim,true), std::domain_error);
+  EXPECT_NO_THROW(profiles.review_claim(reviewer,claim,true));
+  auto own = profiles.request_claim(reviewer,107,"self","Evidence","");
+  EXPECT_THROW(profiles.review_claim(reviewer,own,true), std::domain_error);
 }
