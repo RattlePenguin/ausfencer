@@ -11,6 +11,7 @@ struct LoggerMiddleware {
   }
 
   void after_handle(crow::request &req, crow::response &res, context &ctx) {
+    if (req.url.rfind("/api/",0) == 0) res.set_header("Cache-Control","no-store");
     CROW_LOG_INFO << req.url << " -> " << res.code << '\n';
   }
 };

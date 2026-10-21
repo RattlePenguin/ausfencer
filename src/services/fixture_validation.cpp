@@ -8,7 +8,9 @@ namespace {
 void require(bool valid, const char *message) {
   if (!valid) throw std::invalid_argument(message);
 }
-bool valid_date(const std::string &date) {
+}
+
+bool valid_competition_date(const std::string &date) {
   if (!std::regex_match(date, std::regex("[0-9]{4}-[0-9]{2}-[0-9]{2}"))) return false;
   int year = std::stoi(date.substr(0,4)), month = std::stoi(date.substr(5,2));
   int day = std::stoi(date.substr(8,2));
@@ -16,7 +18,6 @@ bool valid_date(const std::string &date) {
   if (year < 1900 || month < 1 || month > 12) return false;
   int leap = month == 2 && year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
   return day > 0 && day <= days[month-1] + leap;
-}
 }
 
 void validate_fixture(const FixtureData &fixture) {
@@ -32,7 +33,7 @@ void validate_fixture(const FixtureData &fixture) {
   for (const auto &e : fixture.events) {
     require(!e.id.empty() && !e.tournament.empty() && !e.name.empty(), "Missing event fields");
     require(events.insert(e.id).second, "Duplicate event ID");
-    require(valid_date(e.date), "Invalid competition date");
+    require(valid_competition_date(e.date), "Invalid competition date");
     require(e.weapon == "epee" || e.weapon == "foil" || e.weapon == "sabre", "Invalid weapon");
     require(!e.timezone.empty() && !e.category.empty(), "Missing event context");
     require(std::set<std::string>{"complete","partial","results-only","unresolved"}.count(e.coverage),

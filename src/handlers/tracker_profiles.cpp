@@ -1,6 +1,7 @@
 #include "handlers/tracker.hpp"
 #include "services/statistics.hpp"
-#include <regex>
+#include "services/fixtures.hpp"
+#include <charconv>
 #include <set>
 
 TrackerFilter tracker_filter(const crow::request &req) {
@@ -13,12 +14,14 @@ TrackerFilter tracker_filter(const crow::request &req) {
       !std::set<std::string>{"","complete","partial","results-only","unresolved"}.count(filter.coverage))
     throw std::invalid_argument("Invalid tracker filter");
   for (const auto &date : {filter.from,filter.to})
-    if (!date.empty() && !std::regex_match(date,std::regex("[0-9]{4}-[0-9]{2}-[0-9]{2}")))
+    if (!date.empty() && !valid_competition_date(date))
       throw std::invalid_argument("Dates must use YYYY-MM-DD");
   if (!filter.from.empty() && !filter.to.empty() && filter.from>filter.to) throw std::invalid_argument("Reversed date range");
   if (!get("opponent").empty()) {
-    size_t consumed; filter.opponent=std::stoi(get("opponent"),&consumed);
-    if (filter.opponent<1 || consumed!=get("opponent").size()) throw std::invalid_argument("Invalid opponent");
+    auto value = get("opponent");
+    auto parsed = std::from_chars(value.data(),value.data()+value.size(),filter.opponent);
+    if (parsed.ec != std::errc{} || parsed.ptr != value.data()+value.size() || filter.opponent < 1)
+      throw std::invalid_argument("Invalid opponent");
   }
   return filter;
 }

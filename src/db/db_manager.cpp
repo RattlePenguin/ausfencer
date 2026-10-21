@@ -23,7 +23,7 @@ DbRows DbManager::query(const std::string &statement,
   if (sqlite3_bind_parameter_count(raw) != static_cast<int>(parameters.size()))
     throw std::invalid_argument("SQL parameter count mismatch");
   for (size_t i = 0; i < parameters.size(); ++i) {
-    if (sqlite3_bind_text(raw, i + 1, parameters[i].c_str(), -1, SQLITE_TRANSIENT) != SQLITE_OK)
+    if (sqlite3_bind_text(raw, i + 1, parameters[i].data(), parameters[i].size(), SQLITE_TRANSIENT) != SQLITE_OK)
       throw std::runtime_error(sqlite3_errmsg(connection));
   }
   DbRows rows;
@@ -32,7 +32,8 @@ DbRows DbManager::query(const std::string &statement,
     DbRow row;
     for (int i = 0; i < sqlite3_column_count(raw); ++i) {
       const auto *value = sqlite3_column_text(raw, i);
-      if (value) row[sqlite3_column_name(raw, i)] = reinterpret_cast<const char *>(value);
+      if (value) row[sqlite3_column_name(raw, i)] =
+        std::string(reinterpret_cast<const char *>(value),sqlite3_column_bytes(raw,i));
     }
     rows.push_back(std::move(row));
   }

@@ -76,3 +76,10 @@ TEST_F(DbManagerTest, BoutsRequireEntriesAndValidScores) {
     VALUES('test','missing','F','',1,2,15,10,1,'completed','synthetic','demo'))"), std::runtime_error);
   EXPECT_TRUE(db.query("SELECT * FROM bouts").empty());
 }
+
+TEST_F(DbManagerTest, PreparedQueriesPreserveEmbeddedNulls) {
+  DbManager db(":memory:");
+  std::string value("Demo\0Name",9);
+  auto rows=db.query("SELECT ? AS value",{value});
+  EXPECT_EQ(rows[0].at("value"),value);
+}
