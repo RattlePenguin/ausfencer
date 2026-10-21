@@ -28,3 +28,11 @@ DbRows ResultRepo::reports(const std::string &token, bool queue) {
     (queue ? std::string("r.state='pending'") : std::string("r.account_id=?")) + " ORDER BY r.id",
     queue ? std::vector<std::string>{} : std::vector<std::string>{actor.at("id")});
 }
+
+DbRows ResultRepo::contributions(const std::string &token) {
+  auto actor = AccountRepo(db_).authenticate(token);
+  if (actor.empty()) throw std::domain_error("Sign in required");
+  auto lock = db_->acquire_lock();
+  return db_->query(R"(SELECT c.id,b.rowid AS bout,c.state,c.created_at,b.trust,b.disputed
+    FROM contributions c JOIN bouts b ON b.id=c.bout_id WHERE c.account_id=? ORDER BY c.id DESC)", {actor.at("id")});
+}

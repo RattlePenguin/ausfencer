@@ -19,6 +19,7 @@ void WorkflowHandler::register_routes(App &app) {
       result["account"] = public_rows({actor});
       result["claims"] = public_rows(ProfileRepo(db_).claims(token));
       result["reports"] = public_rows(ResultRepo(db_).reports(token));
+      result["contributions"] = public_rows(ResultRepo(db_).contributions(token));
       if (actor.at("role") == "moderator") {
         result["profile_queue"] = public_rows(ProfileRepo(db_).review_queue(token));
         result["result_queue"] = public_rows(ResultRepo(db_).reports(token,true));
@@ -46,6 +47,14 @@ crow::json::wvalue WorkflowHandler::action(const crow::request &req, const std::
   else if (name == "privacy") result["id"] = profiles.request_privacy(body.integer("fencer"),body.text("contact"),body.text("evidence"));
   else if (name == "review-privacy") profiles.review_privacy(token,body.integer("id"),body.boolean("approved"));
   else if (name == "logout") AccountRepo(db_).logout(token);
+  else if (name == "report") result["id"] = ResultRepo(db_).report(token,body.integer("bout"),body.text("kind"),body.text("detail"));
+  else if (name == "correct") ResultRepo(db_).correct(token,body.integer("bout"),body.integer("revision"),
+    body.number("left_score"),body.number("right_score"),body.text("winner_side"),body.text("status"),body.text("reason"));
+  else if (name == "submit") {
+    CompetitionBout bout{"",body.text("event"),body.text("stage"),body.text("pool"),body.integer("left"),body.integer("right"),
+      body.number("left_score"),body.number("right_score"),body.number("winner"),"completed","community"};
+    result["id"] = ResultRepo(db_).submit(token,body.text("operation"),bout,body.text("evidence"));
+  }
   else throw TrackerNotFound("Unknown action");
   return result;
 }
