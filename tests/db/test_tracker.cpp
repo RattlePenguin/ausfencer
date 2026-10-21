@@ -2,6 +2,7 @@
 #include "services/fixtures.hpp"
 #include "db/repos/fixtures.hpp"
 #include "db/repos/tracker.hpp"
+#include "services/statistics.hpp"
 #include <gtest/gtest.h>
 
 class TrackerTest : public ::testing::Test {};
@@ -107,4 +108,38 @@ TEST_F(TrackerTest, HistoriesUseCanonicalScoresAndRedactHiddenOpponents) {
   EXPECT_EQ(history.back().count("left_id"), 0u);
   EXPECT_EQ(history.back().at("received"), "5");
   EXPECT_TRUE(repo.bout(99999).empty());
+}
+
+TEST_F(TrackerTest, StatisticsMatchHandCalculationsAndAnnualRoundFilters) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  FixtureRepo(db).import_fixture(load_fixture(FIXTURE_DIR), true);
+  TrackerRepo repo(db);
+  TrackerFilter filter; filter.year = "2026"; filter.weapon = "epee";
+  auto stats = calculate_statistics(repo.history(101,filter));
+  EXPECT_EQ(stats.wins, 7); EXPECT_EQ(stats.losses, 1);
+  EXPECT_EQ(stats.scored, 67); EXPECT_EQ(stats.received, 45);
+  EXPECT_DOUBLE_EQ(*stats.win_rate(), 7.0/8);
+  EXPECT_DOUBLE_EQ(*stats.touch_share(), 67.0/112);
+  stats = calculate_statistics(repo.history(107,filter));
+  EXPECT_EQ(stats.wins, 8); EXPECT_EQ(stats.losses, 0);
+  EXPECT_EQ(stats.scored, 70); EXPECT_EQ(stats.received, 44);
+  stats = calculate_statistics(repo.history(101));
+  EXPECT_EQ(stats.wins, 8); EXPECT_EQ(stats.scored, 72); EXPECT_EQ(stats.received, 48);
+  filter.stage = "de";
+  stats = calculate_statistics(repo.history(101,filter));
+  EXPECT_EQ(stats.wins, 2); EXPECT_EQ(stats.losses, 1); EXPECT_EQ(stats.scored, 43);
+  EXPECT_FALSE(calculate_statistics({}).win_rate());
+}
+
+TEST_F(TrackerTest, StatisticsSeparateDisputesAdministrativeAndUnknownScores) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  FixtureRepo(db).import_fixture(load_fixture(FIXTURE_DIR), true);
+  db->query("UPDATE bouts SET disputed=1 WHERE rowid=1");
+  db->query("UPDATE bouts SET status='administrative' WHERE rowid=2");
+  db->query("UPDATE bouts SET status='unfinished',winner_id=NULL WHERE rowid=3");
+  db->query("UPDATE bouts SET left_score=NULL,right_score=NULL WHERE rowid=4");
+  auto stats = calculate_statistics(TrackerRepo(db).history(101));
+  EXPECT_EQ(stats.wins, 5); EXPECT_EQ(stats.losses, 1);
+  EXPECT_EQ(stats.disputed, 1); EXPECT_EQ(stats.administrative, 1); EXPECT_EQ(stats.unfinished, 1);
+  EXPECT_EQ(stats.score_known, 5);
 }
