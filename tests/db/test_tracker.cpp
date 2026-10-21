@@ -223,3 +223,17 @@ TEST_F(TrackerTest, UnregisteredPrivacyRequestsNeedAReviewedDecision) {
   EXPECT_TRUE(tracker.profile(101).empty());
   EXPECT_TRUE(profiles.review_queue(reviewer).empty());
 }
+
+TEST_F(TrackerTest, ResetRequiresADemoMarkerAndImportsRecordFailures) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  FixtureRepo repo(db); auto data = load_fixture(FIXTURE_DIR);
+  EXPECT_THROW(repo.import_fixture(data,true,true), std::invalid_argument);
+  repo.import_fixture(data,true);
+  auto changed = data; changed.bouts[0].left_score = 4;
+  EXPECT_THROW(repo.import_fixture(changed,true), std::invalid_argument);
+  EXPECT_EQ(db->query("SELECT * FROM imports WHERE status='failed'").size(), 2u);
+  db->query("UPDATE bouts SET left_score=4 WHERE rowid=1");
+  repo.import_fixture(data,true,true);
+  EXPECT_EQ(db->query("SELECT left_score FROM bouts WHERE rowid=1")[0].at("left_score"), "5");
+  EXPECT_EQ(db->query("SELECT * FROM bouts").size(), 44u);
+}
