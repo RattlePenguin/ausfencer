@@ -4,6 +4,9 @@ int ProfileRepo::request_privacy(int fencer, const std::string &contact, const s
   if (contact.empty() || contact.size() > 300 || evidence.empty() || evidence.size() > 4000)
     throw std::invalid_argument("Contact and supporting context required");
   auto lock = db_->acquire_lock();
+  auto pending = db_->query("SELECT count(*) AS total FROM privacy_requests WHERE fencer_id=? AND contact=? AND state='pending'",
+                            {std::to_string(fencer),contact});
+  if (std::stoi(pending[0].at("total")) >= 3) throw std::domain_error("A privacy request is already awaiting review");
   db_->query("INSERT INTO privacy_requests(fencer_id,contact,evidence) VALUES(?,?,?)",
              {std::to_string(fencer),contact,evidence});
   return std::stoi(db_->query("SELECT last_insert_rowid() AS id")[0].at("id"));
@@ -32,6 +35,6 @@ DbRows ProfileRepo::review_queue(const std::string &token) {
   auto actor = AccountRepo(db_).authenticate(token);
   if (actor.empty() || actor.at("role") != "moderator") throw std::domain_error("Reviewer required");
   auto lock = db_->acquire_lock();
-  return db_->query(R"(SELECT id,'claim' AS type,fencer_id,kind,evidence FROM claims WHERE state='pending'
-    UNION ALL SELECT id,'privacy',fencer_id,'privacy',evidence FROM privacy_requests WHERE state='pending')");
+  return db_->query(R"(SELECT id,'claim' AS type,fencer_id,kind,evidence,'' AS contact FROM claims WHERE state='pending'
+    UNION ALL SELECT id,'privacy',fencer_id,'privacy',evidence,contact FROM privacy_requests WHERE state='pending')");
 }

@@ -373,3 +373,13 @@ TEST_F(TrackerTest, FixtureImportsLinkMatchingCommunityResultsWithoutDoubleCount
   EXPECT_EQ(calculate_statistics(TrackerRepo(db).history(101)).scored,72);
   EXPECT_EQ(db->query("SELECT * FROM bouts WHERE trust='community'").size(),1u);
 }
+
+TEST_F(TrackerTest, ContributionRateLimitsAllowSafeRetries) {
+  auto db=std::make_shared<DbManager>(":memory:");
+  auto data=load_fixture(FIXTURE_DIR); FixtureRepo(db).import_fixture(data,true);
+  auto token=AccountRepo(db).create_demo_session("Contributor","member"); ResultRepo results(db);
+  for (int i=0;i<30;++i) results.submit(token,"operation-"+std::to_string(i),data.bouts[0],"");
+  EXPECT_THROW(results.submit(token,"excess",data.bouts[0],""),std::domain_error);
+  EXPECT_NO_THROW(results.submit(token,"operation-0",data.bouts[0],""));
+  EXPECT_EQ(db->query("SELECT * FROM bouts").size(),44u);
+}

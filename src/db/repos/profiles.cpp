@@ -8,6 +8,11 @@ int ProfileRepo::request_claim(const std::string &token, int fencer, const std::
       (kind == "guardian" && consent != "demo-v1"))
     throw std::invalid_argument("Claim needs evidence and guardian consent where applicable");
   auto lock = db_->acquire_lock();
+  auto existing = db_->query("SELECT 1 FROM claims WHERE account_id=? AND fencer_id=? AND kind=?",
+                             {actor.at("id"),std::to_string(fencer),kind});
+  if (!existing.empty()) throw std::domain_error("Claim already exists; follow its review status");
+  auto recent = db_->query("SELECT count(*) AS total FROM claims WHERE account_id=? AND created_at>=datetime('now','-1 hour')", {actor.at("id")});
+  if (std::stoi(recent[0].at("total")) >= 10) throw std::domain_error("Hourly claim limit reached");
   auto profile = db_->query("SELECT guardian_required FROM profiles WHERE fencer_id=?", {std::to_string(fencer)});
   if (profile.empty()) throw std::invalid_argument("Unknown profile");
   if (kind == "self" && profile[0].at("guardian_required") == "1")

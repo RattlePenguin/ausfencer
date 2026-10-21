@@ -6,6 +6,8 @@ int ResultRepo::report(const std::string &token, int bout, const std::string &ki
   if ((kind != "score" && kind != "identity") || detail.empty() || detail.size() > 4000)
     throw std::invalid_argument("Report needs a kind and supporting detail");
   auto lock = db_->acquire_lock();
+  auto recent = db_->query("SELECT count(*) AS total FROM reports WHERE account_id=? AND created_at>=datetime('now','-1 hour')", {actor.at("id")});
+  if (std::stoi(recent[0].at("total")) >= 30) throw std::domain_error("Hourly report limit reached");
   auto rows = db_->query("SELECT id FROM bouts WHERE rowid=?", {std::to_string(bout)});
   if (rows.empty()) throw std::invalid_argument("Unknown bout");
   db_->query("BEGIN IMMEDIATE");

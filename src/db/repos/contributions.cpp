@@ -27,6 +27,8 @@ int ResultRepo::submit(const std::string &token, const std::string &operation, C
       if (repeat[0].at("payload")!=payload) throw std::domain_error("Operation ID already used for different facts");
       db_->query("COMMIT"); return std::stoi(repeat[0].at("id"));
     }
+    auto recent = db_->query("SELECT count(*) AS total FROM contributions WHERE account_id=? AND created_at>=datetime('now','-1 hour')", {person});
+    if (std::stoi(recent[0].at("total")) >= 30) throw std::domain_error("Hourly contribution limit reached");
     auto entries=db_->query("SELECT pool FROM entries WHERE event_id=? AND fencer_id IN (?,?)",
       {b.event,std::to_string(b.left),std::to_string(b.right)});
     if (entries.size()!=2 || (b.stage=="pool" && (b.pool.empty() || entries[0].at("pool")!=b.pool || entries[1].at("pool")!=b.pool)))
