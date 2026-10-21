@@ -1,5 +1,6 @@
 import {view, el, link, button, api, table} from './ui.js';
 import {act, actionForm} from './forms.js';
+import {contributionForms} from './contribute.js';
 
 export async function account() {
   view.replaceChildren(el('h1', 'My demo account'));
@@ -34,4 +35,5 @@ export async function account() {
     view.append(el('h2', 'My contributions'), table(['Record', 'Status', 'Submitted'], data.contributions.map(c => [link('Bout', `#bout/${c.bout}`), c.state, c.created_at])),
       el('h2', 'My reports'), table(['Record', 'Kind', 'Status'], data.reports.map(r => [link('Bout', `#bout/${r.bout}`), r.kind, r.state])));
   }
+  await contributionForms(account, Boolean(data));
 }

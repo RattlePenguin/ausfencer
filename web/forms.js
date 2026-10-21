@@ -11,7 +11,7 @@ export function actionForm(title, fields, action, open = false) {
     const label = el('label', title);
     const control = Array.isArray(type) ? el('select', '', {name}) : el('input', '', {name, type});
     if (Array.isArray(type)) type.forEach(([value, text]) => control.append(el('option', text, {value})));
-    control.value = initial; control.required = true; label.append(control); form.append(label);
+    control.value = initial; control.required = field[4] !== false; label.append(control); form.append(label);
   }
   const submit = el('button', title, {type: 'submit'});
   form.append(submit);
@@ -21,7 +21,7 @@ export function actionForm(title, fields, action, open = false) {
       submit.disabled = true;
       try {
         const data = Object.fromEntries(new FormData(form));
-        fields.forEach(([name, , type]) => { if (type === 'number') data[name] = Number(data[name]); });
+        fields.forEach(([name, , type]) => { if (type === 'number') data[name] = data[name] === '' ? null : Number(data[name]); });
         await action(data);
         document.querySelector('#message').textContent = 'Saved.';
       } finally { submit.disabled = false; }
