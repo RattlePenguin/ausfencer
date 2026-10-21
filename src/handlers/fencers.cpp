@@ -31,7 +31,7 @@ crow::response FencerHandler::get_all(const crow::request &req) {
       req.url_params.get("page") ? req.url_params.get("page") : "1";
 
   try {
-    page = std::max(1, std::stoi(page_param));
+    page = std::clamp(std::stoi(page_param),1,1000000);
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
   }
@@ -42,7 +42,7 @@ crow::response FencerHandler::get_all(const crow::request &req) {
       req.url_params.get("limit") ? req.url_params.get("limit") : "10";
 
   try {
-    limit = std::max(1, std::stoi(limit_param));
+    limit = std::clamp(std::stoi(limit_param),1,100);
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
   }
@@ -54,7 +54,6 @@ crow::response FencerHandler::get_all(const crow::request &req) {
     fencer_json["id"] = fencer.id;
     fencer_json["first_name"] = fencer.first_name;
     fencer_json["last_name"] = fencer.last_name;
-    fencer_json["birth_year"] = fencer.birth_year;
     fencers.push_back(std::move(fencer_json));
   }
   res["fencers"] = std::move(fencers);
@@ -73,7 +72,6 @@ crow::response FencerHandler::get(int id) {
   res["id"] = fencer->id;
   res["first_name"] = fencer->first_name;
   res["last_name"] = fencer->last_name;
-  res["birth_year"] = fencer->birth_year;
   return crow::response(crow::OK, res);
 }
 

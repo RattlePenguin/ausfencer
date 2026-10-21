@@ -2,6 +2,7 @@
 #include "services/fixtures.hpp"
 #include "db/repos/fixtures.hpp"
 #include "db/repos/tracker.hpp"
+#include "db/repos/fencers.hpp"
 #include "services/statistics.hpp"
 #include <gtest/gtest.h>
 
@@ -142,4 +143,16 @@ TEST_F(TrackerTest, StatisticsSeparateDisputesAdministrativeAndUnknownScores) {
   EXPECT_EQ(stats.wins, 5); EXPECT_EQ(stats.losses, 1);
   EXPECT_EQ(stats.disputed, 1); EXPECT_EQ(stats.administrative, 1); EXPECT_EQ(stats.unfinished, 1);
   EXPECT_EQ(stats.score_known, 5);
+}
+
+TEST_F(TrackerTest, LegacyFencerReadsRespectProfileSuppression) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  FixtureRepo(db).import_fixture(load_fixture(FIXTURE_DIR), true);
+  FencerRepo repo(db);
+  EXPECT_EQ(repo.get_all("",1,100).size(), 11u);
+  EXPECT_EQ(repo.get(112), nullptr);
+  db->query("UPDATE profiles SET visible=0 WHERE fencer_id=101");
+  EXPECT_EQ(repo.get(101), nullptr);
+  EXPECT_EQ(repo.get_all("Mira Vale",1,10).size(), 1u);
+  EXPECT_THROW(repo.get_all("",1,1000), std::invalid_argument);
 }
