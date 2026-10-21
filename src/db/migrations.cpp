@@ -4,8 +4,8 @@
 
 void migrate_tracker(DbManager &db) {
   const int version = std::stoi(db.query("PRAGMA user_version")[0].at("user_version"));
-  if (version > 4) throw std::runtime_error("Database schema is newer than this application");
-  if (version >= 4) return;
+  if (version > 5) throw std::runtime_error("Database schema is newer than this application");
+  if (version >= 5) return;
   db.query("BEGIN IMMEDIATE");
   try {
     if (version < 1) {
@@ -95,11 +95,22 @@ void migrate_tracker(DbManager &db) {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(contribution_id,fencer_id)))");
     db.query("PRAGMA user_version = 3");
     }
+    if (version < 4) {
     db.query(R"(CREATE TABLE profile_audit(id INTEGER PRIMARY KEY,
       fencer_id INTEGER NOT NULL REFERENCES profiles(fencer_id), actor INTEGER REFERENCES accounts(id),
       reason TEXT NOT NULL, before_visible INTEGER NOT NULL, after_visible INTEGER NOT NULL,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP))");
     db.query("PRAGMA user_version = 4");
+    }
+    db.query(R"(CREATE TABLE reports(id INTEGER PRIMARY KEY,
+      bout_id TEXT NOT NULL REFERENCES bouts(id), account_id INTEGER NOT NULL REFERENCES accounts(id),
+      kind TEXT NOT NULL CHECK(kind IN ('score','identity')), detail TEXT NOT NULL,
+      state TEXT NOT NULL DEFAULT 'pending' CHECK(state IN ('pending','resolved','rejected')),
+      reviewer INTEGER REFERENCES accounts(id), created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP))");
+    db.query(R"(CREATE TABLE identity_audit(id INTEGER PRIMARY KEY,
+      fencer_id INTEGER NOT NULL REFERENCES profiles(fencer_id), actor INTEGER NOT NULL REFERENCES accounts(id),
+      reason TEXT NOT NULL, detail TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP))");
+    db.query("PRAGMA user_version = 5");
     db.query("COMMIT");
   } catch (...) {
     db.query("ROLLBACK");

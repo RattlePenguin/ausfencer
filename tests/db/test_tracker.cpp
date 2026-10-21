@@ -6,6 +6,7 @@
 #include "services/statistics.hpp"
 #include "db/repos/accounts.hpp"
 #include "db/repos/profiles.hpp"
+#include "db/repos/results.hpp"
 #include <gtest/gtest.h>
 
 class TrackerTest : public ::testing::Test {};
@@ -236,4 +237,17 @@ TEST_F(TrackerTest, ResetRequiresADemoMarkerAndImportsRecordFailures) {
   repo.import_fixture(data,true,true);
   EXPECT_EQ(db->query("SELECT left_score FROM bouts WHERE rowid=1")[0].at("left_score"), "5");
   EXPECT_EQ(db->query("SELECT * FROM bouts").size(), 44u);
+}
+
+TEST_F(TrackerTest, ReportsPreserveScoresAndExcludeDisputesFromStatistics) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  FixtureRepo(db).import_fixture(load_fixture(FIXTURE_DIR), true);
+  auto token = AccountRepo(db).create_demo_session("Reporter","member");
+  ResultRepo results(db);
+  EXPECT_THROW(results.report("",1,"score","Wrong score"), std::domain_error);
+  results.report(token,1,"score","Demo evidence for a correction");
+  EXPECT_EQ(db->query("SELECT left_score FROM bouts WHERE rowid=1")[0].at("left_score"), "5");
+  EXPECT_EQ(calculate_statistics(TrackerRepo(db).history(101)).wins, 7);
+  EXPECT_EQ(results.reports(token)[0].at("state"), "pending");
+  EXPECT_THROW(results.reports(token,true), std::domain_error);
 }

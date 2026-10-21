@@ -36,7 +36,7 @@ void FixtureRepo::import_fixture(const FixtureData &data, bool approved, bool re
       throw std::invalid_argument("This database is not the demo dataset");
     if (reset) {
       if (marker.empty()) throw std::invalid_argument("Reset requires an existing marked demo database");
-      for (const auto *table : {"confirmations","contributions","revisions","observations","bouts",
+      for (const auto *table : {"reports","identity_audit","confirmations","contributions","revisions","observations","bouts",
            "entries","events","tournaments","sources","profile_audit","privacy_requests",
            "claims","sessions","signins","accounts","external_ids","aliases","profiles","fencers","tracker_meta"})
         db_->query(std::string("DELETE FROM ") + table);
