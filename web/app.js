@@ -21,7 +21,8 @@ async function search(query = '', page = 1) {
 }
 
 async function route() {
-  const [kind, id] = location.hash.slice(1).split('/');
+  const [kind, rawId] = location.hash.slice(1).split('/');
+  const id = rawId ? decodeURIComponent(rawId) : '';
   view.replaceChildren(el('p', 'Loading…'));
   if (kind === 'events') {
     const data = await api('tracker/events'); view.replaceChildren(el('h1', 'Demo events'));
