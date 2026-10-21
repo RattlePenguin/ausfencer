@@ -1,5 +1,6 @@
 #include "db/db_manager.hpp"
 #include "services/fixtures.hpp"
+#include "db/repos/fixtures.hpp"
 #include <gtest/gtest.h>
 
 class TrackerTest : public ::testing::Test {};
@@ -26,4 +27,17 @@ TEST_F(TrackerTest, RejectsInvalidReferencesScoresAndDates) {
   EXPECT_THROW(validate_fixture(data), std::invalid_argument);
   data = load_fixture(FIXTURE_DIR); data.fencers[1].id = data.fencers[0].id;
   EXPECT_THROW(validate_fixture(data), std::invalid_argument);
+}
+
+TEST_F(TrackerTest, FixtureContextPreviewIsReversibleAndRepeatable) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  FixtureRepo repo(db);
+  auto data = load_fixture(FIXTURE_DIR);
+  repo.import_fixture(data);
+  EXPECT_TRUE(db->query("SELECT * FROM profiles").empty());
+  repo.import_fixture(data, true);
+  repo.import_fixture(data, true);
+  EXPECT_EQ(db->query("SELECT * FROM profiles").size(), 12u);
+  EXPECT_EQ(db->query("SELECT * FROM entries").size(), 18u);
+  EXPECT_EQ(db->query("SELECT visible FROM profiles WHERE fencer_id=112")[0].at("visible"), "0");
 }
