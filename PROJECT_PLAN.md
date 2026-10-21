@@ -1,6 +1,48 @@
 # AusFencer project plan
 
-Draft dated 22 October 2026, updated with the owner's decisions on dummy-data development, eventual real-data coverage, community contributions and profile visibility. Based on the README, current source and tests, the product direction discussed with the project owner, and the linked research below. Recommendations are provisional where a question remains unanswered. This document plans future work; it does not describe features as already delivered.
+Draft dated 22 October 2026, updated with the owner's decisions on dummy-data development, eventual real-data coverage, community contributions and profile visibility. Based on the original source review, the product direction discussed with the project owner, and the linked research below. Recommendations are provisional where a question remains unanswered. Sections 1–12 retain the planning baseline; delivered work and remaining checks are recorded in the implementation checkpoint below.
+
+**Implementation checkpoint — 22 October 2026**
+
+| Milestone | Current status | Delivered / remaining |
+| --- | --- | --- |
+| M0 | Complete | Versioned fictional fixture specification and JSON: 12 entrants, two poules, 41 contested épée bouts, four byes, completed tableau, shared third places, 2025 return/alias, foil/sabre examples, duplicate names, hand totals and preview/seed/reset commands |
+| M1 | In progress | Versioned SQLite migrations preserve legacy records; profiles, aliases, issuer-scoped IDs, events/entries, bouts, provenance, protected writes, demo accounts, reviewed claims and visibility are implemented. Google/email-link verification and production account-age/consent onboarding remain unfinished |
+| M2 | In progress | Transactional previews/approved imports, repeat/matrix/community deduplication, receipts, conflict queues, score/participant corrections, rejection and revision recovery are implemented. New community competition creation, participant confirmations and broader alias/external-ID/merge/split administration remain unfinished |
+| M3 | In progress | Vanilla responsive frontend, Unicode full-name/alias search, distinguishable duplicate names, profiles, bout/event views, poule matrices/rankings/tableau/placings, annual/lifetime statistics, filters, claim/guardian/opt-out controls and moderation screens are implemented. Live browser/device acceptance and assisted guardian handover remain outstanding |
+
+See [the fixture specification and run instructions](fixtures/README.md) and
+[the API guide](docs/API.md). The server binds to loopback by default and inserts
+no data at startup. Imports require an explicit checksum approval. Demo resets
+require a marked demo database and explicitly reset its accounts/privacy settings;
+ordinary reimports preserve suppression, grants and accepted corrections.
+
+Known demo totals are checked from both opponents' perspectives: 101 has 7–1
+and 67–45 touches in 2026 épée, then 8–1 and 72–48 across both years. The complete
+2026 event conserves 41 wins, 41 losses and 489 touches scored/received, with
+consistent bracket advancement. Hidden names, aliases, source-listed names and
+profile links are redacted across tracker and legacy public routes, including
+after reimports and changed source identifiers. Shared numeric results remain.
+
+Validation: the C++ build and all 53 GoogleTest cases pass. JavaScript modules
+pass `node --check`. AddressSanitizer/UndefinedBehaviorSanitizer also pass the
+53 cases with `ASAN_OPTIONS=detect_leaks=0`; LeakSanitizer cannot run under this
+environment's ptrace restriction. A listening-server/browser check could not be
+completed here: socket creation returns `Operation not permitted`, and a separate
+headless Firefox attempt crashes. In-process HTTP journeys are tested; visual,
+mobile and real-browser behavior still need verification in a suitable environment.
+
+Next implementation steps, following the same reviewed ≤100-line commit cycle:
+
+1. Configure and implement Google/email-link verification and account onboarding;
+   local demo sessions currently let testers exercise protected flows.
+2. Add community competition creation, participant confirmation and the remaining
+   identity administration flows; retain audited, reversible decisions.
+3. Run actual browser/mobile journeys and fix findings, including guardian
+   handover and privacy behavior. Then continue M4 acceptance/recovery checks.
+
+M1–M3 are deliberately not marked complete. No real-result acquisition, provider
+adapter, real-data permissions work, tournament hosting or referee app was started.
 
 **1. Product outcome and priorities**
 
@@ -17,6 +59,9 @@ The delivery order is:
 Both tournament hosting and the referee app depend on a completed tracker. Their relative order after that is an open decision; the sequence above follows the order in the project brief. International identifiers and names must work from the beginning, even though eventual initial data collection is Australian. The current priority is a working app with dummy data. Source acquisition, provider agreements, legal documentation for real-data use and historical backfill are deferred until that working-app milestone is accepted.
 
 **2. What exists today**
+
+This table records the original planning baseline; use the checkpoint above for
+the implementation's current state.
 
 | Area | Repository evidence | Work still required |
 | --- | --- | --- |
