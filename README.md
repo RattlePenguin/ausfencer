@@ -54,3 +54,4 @@ checksum. Keep generated databases under ignored `build/`.
 
 See the [fictional dataset guide](fixtures/README.md) for fixture totals, local
 account provisioning and explicit demo reset.
+See the [API guide](docs/API.md) for read routes and protected workflow examples.
