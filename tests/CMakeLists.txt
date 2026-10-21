@@ -4,6 +4,7 @@ add_executable(ausfencer_tests
   db/test_tracker.cpp
   db/test_fencer_repo.cpp
   handlers/test_fencer_handler.cpp
+  handlers/test_action_body.cpp
   ${CMAKE_SOURCE_DIR}/src/db/db_manager.cpp
   ${CMAKE_SOURCE_DIR}/src/db/migrations.cpp
   ${CMAKE_SOURCE_DIR}/src/db/repos/base.cpp
