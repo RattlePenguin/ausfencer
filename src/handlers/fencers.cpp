@@ -1,5 +1,7 @@
 #include "handlers/fencers.hpp"
 #include "models/Fencer.hpp"
+#include "handlers/action_body.hpp"
+#include "services/names.hpp"
 #include <crow/common.h>
 #include <crow/http_request.h>
 #include <crow/http_response.h>
@@ -7,6 +9,18 @@
 #include <exception>
 #include <memory>
 #include <openssl/crypto.h>
+
+namespace {
+Fencer read_fencer(const crow::request &request, int id) {
+  ActionBody body(request.body);
+  Fencer fencer{id,body.text("first_name"),body.text("last_name"),body.number("birth_year").value_or(0)};
+  auto name = fold_name(fencer.first_name + " " + fencer.last_name);
+  if (name.find_first_not_of(" \t\r\n") == std::string::npos || name.size() > 200 ||
+      (fencer.birth_year && (fencer.birth_year < 1900 || fencer.birth_year > 2100)))
+    throw std::invalid_argument("Invalid fencer name or optional birth year");
+  return fencer;
+}
+}
 
 FencerHandler::FencerHandler(const std::string &basePath,
                              std::shared_ptr<FencerRepo> repo, std::string write_token)
@@ -76,14 +90,7 @@ crow::response FencerHandler::get(int id) {
 }
 
 crow::response FencerHandler::create(const crow::request &req) {
-  crow::json::rvalue json{crow::json::load(req.body)};
-
-  Fencer fencer{
-      .id = 1,
-      .first_name = json["first_name"].s(),
-      .last_name = json["last_name"].s(),
-      .birth_year = static_cast<int>(json["birth_year"].i()),
-  };
+  auto fencer = read_fencer(req,0);
   int real_id{this->repo_->create(fencer)};
 
   crow::json::wvalue res;
@@ -102,13 +109,7 @@ crow::response FencerHandler::update(int id, const crow::request &req) {
     return this->not_found("Fencer not found");
   }
 
-  crow::json::rvalue json{crow::json::load(req.body)};
-  Fencer updated_fencer{
-      .id = old_fencer->id,
-      .first_name = json["first_name"].s(),
-      .last_name = json["last_name"].s(),
-      .birth_year = static_cast<int>(json["birth_year"].i()),
-  };
+  auto updated_fencer = read_fencer(req,old_fencer->id);
 
   this->repo_->update(updated_fencer);
 
@@ -147,13 +148,15 @@ void FencerHandler::register_routes(App &app) {
       .methods(crow::HTTPMethod::POST)(
           [this](const crow::request &req) {
             if (!can_write(req)) return crow::response(403);
-            return this->create(req);
+            try { return this->create(req); }
+            catch (const std::invalid_argument &e) { return bad_request(e.what()); }
           });
 
   app.route_dynamic(this->basePath_ + "/<int>")
       .methods(crow::HTTPMethod::PUT)([this](const crow::request &req, int id) {
         if (!can_write(req)) return crow::response(403);
-        return this->update(id, req);
+        try { return this->update(id, req); }
+        catch (const std::invalid_argument &e) { return bad_request(e.what()); }
       });
 
   app.route_dynamic(this->basePath_ + "/<int>")

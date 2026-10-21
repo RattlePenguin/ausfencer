@@ -58,6 +58,15 @@ TEST_F(FencerHandlerTest, RejectsUnauthorisedWritesBeforeReadingPayload) {
   EXPECT_TRUE(repo_->get_all("",1,10).empty());
 }
 
+TEST_F(FencerHandlerTest, ValidatesPayloadsAndAllowsAnUnknownBirthYear) {
+  for (const auto *body : {"{", "{}", R"({"first_name":1,"last_name":"Demo"})",
+       R"({"first_name":" ","last_name":" "})", R"({"first_name":"Demo","last_name":"User","birth_year":1.5})"})
+    EXPECT_EQ(handle_request("/api/fencers",crow::HTTPMethod::POST,body).code,400);
+  auto response=handle_request("/api/fencers",crow::HTTPMethod::POST,R"({"first_name":"Demo","last_name":""})");
+  EXPECT_EQ(response.code,200);
+  EXPECT_EQ(crow::json::load(response.body)["birth_year"].i(),0);
+}
+
 TEST_F(FencerHandlerTest, CreateFencerSuccess) {
   std::string payload =
       R"({"first_name": "Allan", "last_name": "Goodman", "birth_year": 1990})";
