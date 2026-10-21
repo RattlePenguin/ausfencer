@@ -1,0 +1,6 @@
+[
+  {"id": "epee-2026","tournament": "demo-2026","name": "Demo Spring Épée","date": "2026-09-12","weapon": "epee","category": "open","coverage": "complete","timezone": "Australia/Sydney"},
+  {"id": "epee-2025","tournament": "demo-2025","name": "Demo Autumn Épée","date": "2025-04-05","weapon": "epee","category": "open","coverage": "complete","timezone": "Australia/Sydney"},
+  {"id": "foil-2026","tournament": "demo-2026","name": "Demo Foil Final","date": "2026-09-13","weapon": "foil","category": "open","coverage": "complete","timezone": "Australia/Sydney"},
+  {"id": "sabre-2026","tournament": "demo-2026","name": "Demo Sabre Final","date": "2026-09-13","weapon": "sabre","category": "open","coverage": "complete","timezone": "Australia/Sydney"}
+]

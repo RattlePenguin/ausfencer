@@ -1,0 +1,20 @@
+[
+  {"event": "epee-2026","fencer": 101,"source_name": "Mira Vale","pool": "A","seed": 2,"place": 2,"bye": true},
+  {"event": "epee-2026","fencer": 102,"source_name": "Tavi Quill","pool": "A","seed": 3,"place": 3,"bye": true},
+  {"event": "epee-2026","fencer": 103,"source_name": "Neri Sol","pool": "A","seed": 5,"place": 5,"bye": false},
+  {"event": "epee-2026","fencer": 104,"source_name": "Luca Wren","pool": "A","seed": 7,"place": 7,"bye": false},
+  {"event": "epee-2026","fencer": 105,"source_name": "Ari Fern","pool": "A","seed": 9,"place": 9,"bye": false},
+  {"event": "epee-2026","fencer": 106,"source_name": "Sora Flint","pool": "A","seed": 11,"place": 11,"bye": false},
+  {"event": "epee-2026","fencer": 107,"source_name": "Ivo Reed","pool": "B","seed": 1,"place": 1,"bye": true},
+  {"event": "epee-2026","fencer": 108,"source_name": "Mira Vale","pool": "B","seed": 4,"place": 3,"bye": true},
+  {"event": "epee-2026","fencer": 109,"source_name": "Esmé Moss","pool": "B","seed": 6,"place": 6,"bye": false},
+  {"event": "epee-2026","fencer": 110,"source_name": "Kai Dune","pool": "B","seed": 8,"place": 8,"bye": false},
+  {"event": "epee-2026","fencer": 111,"source_name": "Remy Ash","pool": "B","seed": 10,"place": 10,"bye": false},
+  {"event": "epee-2026","fencer": 112,"source_name": "Noor Pike","pool": "B","seed": 12,"place": 12,"bye": false},
+  {"event": "epee-2025","fencer": 101,"source_name": "M. Vale","pool": "","seed": 1,"place": 1,"bye": false},
+  {"event": "epee-2025","fencer": 107,"source_name": "Ivo Reed","pool": "","seed": 2,"place": 2,"bye": false},
+  {"event": "foil-2026","fencer": 102,"source_name": "Tavi Quill","pool": "","seed": 1,"place": 1,"bye": false},
+  {"event": "foil-2026","fencer": 103,"source_name": "Neri Sol","pool": "","seed": 2,"place": 2,"bye": false},
+  {"event": "sabre-2026","fencer": 104,"source_name": "Luca Wren","pool": "","seed": 1,"place": 1,"bye": false},
+  {"event": "sabre-2026","fencer": 105,"source_name": "Ari Fern","pool": "","seed": 2,"place": 2,"bye": false}
+]

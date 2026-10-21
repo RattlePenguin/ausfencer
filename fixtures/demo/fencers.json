@@ -1,0 +1,14 @@
+[
+  {"id": 101,"name": "Mira Vale","club": "Harbour Blades","state": "NSW","country": "AU","alias": "M. Vale","external_id": "DEMO-101","guardian_required": false},
+  {"id": 102,"name": "Tavi Quill","club": "Harbour Blades","state": "NSW","country": "AU","alias": "","external_id": "DEMO-102","guardian_required": false},
+  {"id": 103,"name": "Neri Sol","club": "Harbour Blades","state": "NSW","country": "AU","alias": "","external_id": "DEMO-103","guardian_required": false},
+  {"id": 104,"name": "Luca Wren","club": "Harbour Blades","state": "NSW","country": "AU","alias": "","external_id": "DEMO-104","guardian_required": false},
+  {"id": 105,"name": "Ari Fern","club": "Harbour Blades","state": "NSW","country": "AU","alias": "","external_id": "DEMO-105","guardian_required": false},
+  {"id": 106,"name": "Sora Flint","club": "Harbour Blades","state": "NSW","country": "AU","alias": "","external_id": "DEMO-106","guardian_required": false},
+  {"id": 107,"name": "Ivo Reed","club": "Gumtree Swords","state": "VIC","country": "AU","alias": "","external_id": "DEMO-107","guardian_required": false},
+  {"id": 108,"name": "Mira Vale","club": "Gumtree Swords","state": "VIC","country": "AU","alias": "","external_id": "DEMO-108","guardian_required": false},
+  {"id": 109,"name": "Esmé Moss","club": "Gumtree Swords","state": "VIC","country": "AU","alias": "","external_id": "DEMO-109","guardian_required": false},
+  {"id": 110,"name": "Kai Dune","club": "Gumtree Swords","state": "VIC","country": "AU","alias": "","external_id": "DEMO-110","guardian_required": false},
+  {"id": 111,"name": "Remy Ash","club": "Gumtree Swords","state": "VIC","country": "AU","alias": "","external_id": "DEMO-111","guardian_required": false},
+  {"id": 112,"name": "Noor Pike","club": "Gumtree Swords","state": "VIC","country": "AU","alias": "","external_id": "DEMO-112","guardian_required": true}
+]
