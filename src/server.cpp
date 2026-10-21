@@ -1,5 +1,6 @@
 #include "server.hpp"
 #include "handlers/fencers.hpp"
+#include "handlers/tracker.hpp"
 #include "handlers/interface.hpp"
 #include <crow/logging.h>
 #include <crow/middlewares/cors.h>
@@ -26,6 +27,7 @@ Server::Server(const ServerConfig &config) : config_{config} {
 }
 
 void Server::setup() {
+  add_handler(std::make_shared<TrackerHandler>(std::make_shared<TrackerRepo>(db_mgr_)));
   const char *token = std::getenv("AUSFENCER_ADMIN_TOKEN");
   this->add_handler(std::make_shared<FencerHandler>(
       "/api/fencers", std::make_shared<FencerRepo>(this->db_mgr_), token ? token : ""));

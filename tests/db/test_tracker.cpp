@@ -7,6 +7,7 @@
 #include "db/repos/accounts.hpp"
 #include "db/repos/profiles.hpp"
 #include "db/repos/results.hpp"
+#include "handlers/tracker.hpp"
 #include <gtest/gtest.h>
 
 class TrackerTest : public ::testing::Test {};
@@ -284,4 +285,19 @@ TEST_F(TrackerTest, CommunitySubmissionsPublishOnceAndCannotOverwriteAcceptedSco
   EXPECT_EQ(db->query("SELECT * FROM bouts").size(),44u);
   EXPECT_EQ(db->query("SELECT state FROM contributions ORDER BY id DESC LIMIT 1")[0].at("state"),"conflict");
   EXPECT_EQ(calculate_statistics(TrackerRepo(db).history(101)).wins,7);
+}
+
+TEST_F(TrackerTest, PublicTrackerRoutesValidatePaginationAndDisableCaching) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  FixtureRepo(db).import_fixture(load_fixture(FIXTURE_DIR),true);
+  App app; TrackerHandler handler(std::make_shared<TrackerRepo>(db));
+  handler.register_routes(app); app.validate();
+  crow::request req; req.url="/api/tracker/fencers"; req.method=crow::HTTPMethod::GET;
+  req.url_params=crow::query_string("?q=Mira%20Vale");
+  crow::response response; app.handle_full(req,response);
+  EXPECT_EQ(response.code,200);
+  EXPECT_EQ(crow::json::load(response.body)["fencers"].size(),2u);
+  EXPECT_EQ(response.get_header_value("Cache-Control"),"no-store");
+  req.url_params=crow::query_string("?limit=101"); response=crow::response();
+  app.handle_full(req,response); EXPECT_EQ(response.code,400);
 }
