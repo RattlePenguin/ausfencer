@@ -4,8 +4,8 @@
 
 void migrate_tracker(DbManager &db) {
   const int version = std::stoi(db.query("PRAGMA user_version")[0].at("user_version"));
-  if (version > 2) throw std::runtime_error("Database schema is newer than this application");
-  if (version >= 2) return;
+  if (version > 3) throw std::runtime_error("Database schema is newer than this application");
+  if (version >= 3) return;
   db.query("BEGIN IMMEDIATE");
   try {
     if (version < 1) {
@@ -33,6 +33,7 @@ void migrate_tracker(DbManager &db) {
       bye INTEGER NOT NULL CHECK(bye IN (0,1)), PRIMARY KEY(event_id,fencer_id)))");
     db.query("PRAGMA user_version = 1");
     }
+    if (version < 2) {
     db.query(R"(CREATE TABLE sources(id TEXT PRIMARY KEY NOT NULL, basis TEXT NOT NULL,
       acquired_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, parser_version TEXT NOT NULL,
       checksum TEXT NOT NULL))");
@@ -64,6 +65,34 @@ void migrate_tracker(DbManager &db) {
       status TEXT NOT NULL CHECK(status IN ('preview','applied','failed')),
       detail TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP))");
     db.query("PRAGMA user_version = 2");
+    }
+    db.query(R"(CREATE TABLE accounts(id INTEGER PRIMARY KEY, label TEXT NOT NULL,
+      role TEXT NOT NULL CHECK(role IN ('member','moderator')),
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP))");
+    db.query(R"(CREATE TABLE signins(provider TEXT NOT NULL, subject TEXT NOT NULL,
+      account_id INTEGER NOT NULL REFERENCES accounts(id), PRIMARY KEY(provider,subject)))");
+    db.query(R"(CREATE TABLE sessions(token_hash TEXT PRIMARY KEY NOT NULL,
+      account_id INTEGER NOT NULL REFERENCES accounts(id), expires_at INTEGER NOT NULL))");
+    db.query(R"(CREATE TABLE claims(id INTEGER PRIMARY KEY,
+      account_id INTEGER NOT NULL REFERENCES accounts(id), fencer_id INTEGER NOT NULL REFERENCES profiles(fencer_id),
+      kind TEXT NOT NULL CHECK(kind IN ('self','guardian')),
+      state TEXT NOT NULL CHECK(state IN ('pending','approved','rejected','withdrawn')),
+      evidence TEXT NOT NULL, consent_version TEXT NOT NULL,
+      reviewer INTEGER REFERENCES accounts(id), created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(account_id,fencer_id,kind)))");
+    db.query(R"(CREATE TABLE privacy_requests(id INTEGER PRIMARY KEY,
+      fencer_id INTEGER NOT NULL REFERENCES profiles(fencer_id), contact TEXT NOT NULL,
+      evidence TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'pending'
+      CHECK(state IN ('pending','hidden','rejected')), created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP))");
+    db.query(R"(CREATE TABLE contributions(id INTEGER PRIMARY KEY,
+      account_id INTEGER NOT NULL REFERENCES accounts(id), operation_id TEXT NOT NULL,
+      bout_id TEXT REFERENCES bouts(id), payload TEXT NOT NULL,
+      state TEXT NOT NULL CHECK(state IN ('published','conflict','rejected')),
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(account_id,operation_id)))");
+    db.query(R"(CREATE TABLE confirmations(contribution_id INTEGER REFERENCES contributions(id),
+      account_id INTEGER REFERENCES accounts(id), fencer_id INTEGER REFERENCES profiles(fencer_id),
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(contribution_id,fencer_id)))");
+    db.query("PRAGMA user_version = 3");
     db.query("COMMIT");
   } catch (...) {
     db.query("ROLLBACK");
