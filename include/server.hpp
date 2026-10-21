@@ -12,6 +12,8 @@
 struct ServerConfig {
   uint16_t port{8080};
   uint16_t threads{2};
+  std::string database{"db.ausfencer"};
+  std::string bind_address{"127.0.0.1"};
 };
 
 using App = crow::App<crow::CORSHandler, LoggerMiddleware>;

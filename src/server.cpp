@@ -11,10 +11,7 @@ Server::Server(const ServerConfig &config) : config_{config} {
   crow::logger::setLogLevel(crow::LogLevel::Info);
 
   app_ = std::make_unique<App>();
-  db_mgr_ = std::make_shared<DbManager>("db.ausfencer");
-
-  // TODO TEST ENTRIES
-  db_mgr_->get_storage().insert(Fencer{0, "big", "balls", 1999});
+  db_mgr_ = std::make_shared<DbManager>(config_.database);
 
   // TODO Taken from AsaHero, write documentation
   auto &cors = app_->get_middleware<crow::CORSHandler>();
@@ -35,7 +32,7 @@ void Server::setup() {
 void Server::start() {
   this->setup();
   std::cout << "Server started on port " << config_.port << std::endl;
-  app_->port(config_.port).multithreaded().run(); // default run command
+  app_->bindaddr(config_.bind_address).port(config_.port).concurrency(config_.threads).run();
 }
 
 void Server::add_handler(std::shared_ptr<IHandler> handler) {
