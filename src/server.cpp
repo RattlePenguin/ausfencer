@@ -7,6 +7,7 @@
 #include <crow/middlewares/cors.h>
 #include <memory>
 #include <cstdlib>
+#include <fstream>
 
 Server::Server(const ServerConfig &config) : config_{config} {
   // Gives logs for given class and above
@@ -28,6 +29,18 @@ Server::Server(const ServerConfig &config) : config_{config} {
 }
 
 void Server::setup() {
+  for (const auto &asset : std::vector<std::pair<std::string,std::string>>{
+       {"/","index.html"},{"/styles.css","styles.css"}}) {
+    app_->route_dynamic(asset.first)([name=asset.second] {
+      std::ifstream file("web/" + name);
+      if (!file) return crow::response(404);
+      crow::response response(std::string((std::istreambuf_iterator<char>(file)),{}));
+      response.set_header("Content-Type",name == "index.html" ? "text/html; charset=utf-8" : "text/css");
+      response.set_header("Cache-Control","no-store");
+      response.set_header("Content-Security-Policy","default-src 'self'; base-uri 'none'; frame-ancestors 'none'");
+      return response;
+    });
+  }
   add_handler(std::make_shared<TrackerHandler>(std::make_shared<TrackerRepo>(db_mgr_)));
   add_handler(std::make_shared<WorkflowHandler>(db_mgr_));
   const char *token = std::getenv("AUSFENCER_ADMIN_TOKEN");
