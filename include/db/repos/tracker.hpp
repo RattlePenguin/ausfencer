@@ -13,6 +13,7 @@ public:
   DbRows profile(int id);
   DbRows events();
   DbRows event_entries(const std::string &event);
+  DbRows profile_events(int id, const TrackerFilter &filter = {});
   DbRows history(int id, const TrackerFilter &filter = {}) { return read_bouts(id,"",filter); }
   DbRows event_bouts(const std::string &id, const TrackerFilter &filter = {}) { return read_bouts(0,id,filter); }
   DbRows bout(int id) { return read_bouts(0,"",{},id); }

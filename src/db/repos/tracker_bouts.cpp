@@ -34,6 +34,7 @@ DbRows TrackerRepo::read_bouts(int person, const std::string &event, const Track
   if (bout) clause("b.rowid=?",std::to_string(bout));
   clause("e.weapon=?",filter.weapon); clause("substr(e.date,1,4)=?",filter.year);
   clause("b.trust=?",filter.trust); clause("e.category=?",filter.category);
+  clause("e.coverage=?",filter.coverage);
   clause("e.date>=?",filter.from); clause("e.date<=?",filter.to);
   if (filter.stage == "de") statement += " AND b.round<>'pool'";
   else clause("b.round=?",filter.stage);

@@ -13,6 +13,7 @@ export async function profile(id, values = {}) {
   const choices = {
     weapon: [['', 'All weapons'], ['epee', 'Épée'], ['foil', 'Foil'], ['sabre', 'Sabre']],
     stage: [['', 'All rounds'], ['pool', 'Poule'], ['de', 'Direct elimination']],
+    coverage: [['', 'All coverage'], ['complete', 'Complete bouts'], ['partial', 'Partial bouts'], ['results-only', 'Placings only'], ['unresolved', 'Unresolved entrants']],
     trust: [['', 'All trust labels'], ['synthetic', 'Synthetic fixture'], ['community', 'Community submitted'], ['organiser', 'Organiser supplied']],
     opponent: [['', 'All opponents'], ...peers.fencers.filter(other => other.id !== id).map(other => [other.id, `${other.name} · ${other.club}`])]
   };
@@ -36,6 +37,8 @@ export async function profile(id, values = {}) {
     el('p', `${stats.wins + stats.losses} contested bouts · ${stats.score_known} with known scores · ${stats.disputed} disputed · ${stats.administrative} administrative · ${stats.unfinished} unfinished`, {class: 'muted'}));
   view.append(el('h2', 'Calendar years'), table(['Year', 'Wins', 'Losses', 'Win rate', 'Scored', 'Received'],
     Object.entries(data.annual || {}).sort().reverse().map(([year, value]) => [year, value.wins, value.losses, percentage(value.win_rate), value.scored, value.received])));
+  view.append(el('h2', 'Event placings'), table(['Date', 'Event', 'Place', 'Event-time club', 'Coverage'],
+    data.events.map(e => [e.date, link(e.name, `#event/${encodeURIComponent(e.id)}`), e.place, e.club, e.coverage])));
   view.append(el('h2', 'Bout history'), table(['Date', 'Event', 'Opponents', 'Score', 'Result', 'Trust', 'Record'], data.bouts.map(b => {
     const opponents = el('span'); opponents.append(person(b, 'left'), ' / ', person(b, 'right'));
     return [b.date, link(b.event_name, `#event/${encodeURIComponent(b.event_id)}`), opponents,

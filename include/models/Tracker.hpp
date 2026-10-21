@@ -38,7 +38,7 @@ struct FixtureData {
 };
 
 struct TrackerFilter {
-  std::string weapon, year, stage, trust, category, from, to;
+  std::string weapon, year, stage, trust, category, from, to, coverage;
   int opponent{0};
 };
 

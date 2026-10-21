@@ -345,3 +345,18 @@ TEST_F(TrackerTest, ChangedSourceIdsCannotRecreateSuppressedIdentities) {
   EXPECT_TRUE(TrackerRepo(db).profile(113).empty());
   EXPECT_TRUE(TrackerRepo(db).search("M. Vale").empty());
 }
+
+TEST_F(TrackerTest, PlacingsRemainAvailableWhenBoutCoverageIsMissing) {
+  auto db=std::make_shared<DbManager>(":memory:");
+  auto data=load_fixture(FIXTURE_DIR);
+  data.bouts.erase(data.bouts.begin()+41);
+  data.events[1].coverage="results-only";
+  FixtureRepo(db).import_fixture(data,true); TrackerRepo tracker(db);
+  EXPECT_EQ(tracker.profile_events(101).size(),2u);
+  TrackerFilter filter; filter.coverage="results-only";
+  EXPECT_TRUE(tracker.history(101,filter).empty());
+  auto events=tracker.profile_events(101,filter);
+  ASSERT_EQ(events.size(),1u); EXPECT_EQ(events[0].at("place"),"1");
+  db->query("UPDATE profiles SET visible=0 WHERE fencer_id=101");
+  EXPECT_TRUE(tracker.profile_events(101).empty());
+}

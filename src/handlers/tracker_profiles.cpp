@@ -6,9 +6,11 @@
 TrackerFilter tracker_filter(const crow::request &req) {
   auto get = [&](const char *key) -> std::string { return req.url_params.get(key) ? req.url_params.get(key) : ""; };
   TrackerFilter filter{get("weapon"),get("year"),get("stage"),get("trust"),get("category"),get("from"),get("to")};
+  filter.coverage = get("coverage");
   if (!std::set<std::string>{"","foil","epee","sabre"}.count(filter.weapon) ||
       !std::set<std::string>{"","pool","de","R16","QF","SF","F"}.count(filter.stage) ||
-      !std::set<std::string>{"","synthetic","community","organiser"}.count(filter.trust) || filter.category.size()>100)
+      !std::set<std::string>{"","synthetic","community","organiser"}.count(filter.trust) || filter.category.size()>100 ||
+      !std::set<std::string>{"","complete","partial","results-only","unresolved"}.count(filter.coverage))
     throw std::invalid_argument("Invalid tracker filter");
   for (const auto &date : {filter.from,filter.to})
     if (!date.empty() && !std::regex_match(date,std::regex("[0-9]{4}-[0-9]{2}-[0-9]{2}")))
@@ -39,10 +41,12 @@ crow::json::wvalue statistics(const DbRows &rows) {
 crow::json::wvalue TrackerHandler::read_profile(int id, const crow::request &request) {
   auto profile = repo_->profile(id);
   if (profile.empty()) throw TrackerNotFound("Profile not found");
-  auto history = repo_->history(id,tracker_filter(request));
+  auto filter = tracker_filter(request);
+  auto history = repo_->history(id,filter);
   crow::json::wvalue result;
   result["profile"]=public_rows(profile); result["bouts"]=public_rows(history);
   result["statistics"]=statistics(history); result["demo"]=true;
+  result["events"]=public_rows(repo_->profile_events(id,filter));
   std::map<std::string,DbRows> years;
   for (const auto &bout : history) if (!bout.at("date").empty()) years[bout.at("date").substr(0,4)].push_back(bout);
   for (const auto &year : years) result["annual"][year.first]=statistics(year.second);
