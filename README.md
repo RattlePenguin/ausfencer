@@ -4,6 +4,9 @@
 
 Read my [blog post](https://duckye.com/aus-fencer/) for a less technical write-up!
 
+See the [project plan](PROJECT_PLAN.md) for the proposed roadmap, data model,
+research, and open product decisions.
+
 AusFencer seeks to solve pain points found in fencing clubs across
 the world, mainly revolving around scoring equipment.
 
