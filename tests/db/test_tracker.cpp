@@ -4,6 +4,7 @@
 #include "db/repos/tracker.hpp"
 #include "db/repos/fencers.hpp"
 #include "services/statistics.hpp"
+#include "db/repos/accounts.hpp"
 #include <gtest/gtest.h>
 
 class TrackerTest : public ::testing::Test {};
@@ -155,4 +156,20 @@ TEST_F(TrackerTest, LegacyFencerReadsRespectProfileSuppression) {
   EXPECT_EQ(repo.get(101), nullptr);
   EXPECT_EQ(repo.get_all("Mira Vale",1,10).size(), 1u);
   EXPECT_THROW(repo.get_all("",1,1000), std::invalid_argument);
+}
+
+TEST_F(TrackerTest, DemoSessionsValidateExpiryAndRevocation) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  AccountRepo accounts(db);
+  EXPECT_THROW(accounts.create_demo_session("Demo","member"), std::invalid_argument);
+  FixtureRepo(db).import_fixture(load_fixture(FIXTURE_DIR), true);
+  auto token = accounts.create_demo_session("Contributor","member");
+  EXPECT_EQ(accounts.authenticate(token).at("role"), "member");
+  EXPECT_NE(db->query("SELECT token_hash FROM sessions")[0].at("token_hash"), token);
+  EXPECT_TRUE(accounts.authenticate(std::string(64,'0')).empty());
+  db->query("UPDATE sessions SET expires_at=0");
+  EXPECT_TRUE(accounts.authenticate(token).empty());
+  auto moderator = accounts.create_demo_session("Reviewer","moderator");
+  accounts.logout(moderator);
+  EXPECT_TRUE(accounts.authenticate(moderator).empty());
 }
