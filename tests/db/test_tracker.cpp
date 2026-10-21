@@ -269,3 +269,19 @@ TEST_F(TrackerTest, CorrectionsAreAuditedRejectStaleWritesAndSurviveReimports) {
   results.correct(reviewer,1,1,5,2,"left","completed","Reverted after second review");
   EXPECT_EQ(calculate_statistics(TrackerRepo(db).history(101)).scored, 72);
 }
+
+TEST_F(TrackerTest, CommunitySubmissionsPublishOnceAndCannotOverwriteAcceptedScores) {
+  auto db=std::make_shared<DbManager>(":memory:");
+  auto data=load_fixture(FIXTURE_DIR); auto bout=data.bouts[0]; data.bouts.erase(data.bouts.begin());
+  FixtureRepo(db).import_fixture(data,true);
+  auto token=AccountRepo(db).create_demo_session("Contributor","member"); ResultRepo results(db);
+  auto id=results.submit(token,"demo-operation",bout,"Fictional supporting record");
+  EXPECT_EQ(results.submit(token,"demo-operation",bout,"Fictional supporting record"),id);
+  EXPECT_EQ(db->query("SELECT * FROM bouts").size(),44u);
+  bout.left_score=4;
+  EXPECT_THROW(results.submit(token,"demo-operation",bout,"Fictional supporting record"),std::domain_error);
+  results.submit(token,"conflicting-operation",bout,"Conflicting evidence");
+  EXPECT_EQ(db->query("SELECT * FROM bouts").size(),44u);
+  EXPECT_EQ(db->query("SELECT state FROM contributions ORDER BY id DESC LIMIT 1")[0].at("state"),"conflict");
+  EXPECT_EQ(calculate_statistics(TrackerRepo(db).history(101)).wins,7);
+}
