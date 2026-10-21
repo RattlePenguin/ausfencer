@@ -9,6 +9,7 @@ include(FetchContent)
 find_package(Crow REQUIRED)
 find_package(SQLite3 REQUIRED)
 find_package(OpenSSL REQUIRED)
+find_package(ICU REQUIRED COMPONENTS uc)
 
 FetchContent_Declare(
   sqlite_orm
@@ -21,6 +22,8 @@ add_library(tracker_domain src/services/fixtures.cpp)
 target_sources(tracker_domain PRIVATE src/services/fixture_validation.cpp)
 target_sources(tracker_domain PRIVATE src/db/repos/fixtures.cpp)
 target_sources(tracker_domain PRIVATE src/db/repos/fixture_bouts.cpp)
+target_sources(tracker_domain PRIVATE src/db/repos/tracker.cpp)
+target_link_libraries(tracker_domain PUBLIC ICU::uc)
 target_include_directories(tracker_domain PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(tracker_domain PUBLIC Crow::Crow sqlite_orm::sqlite_orm SQLite3::SQLite3 OpenSSL::Crypto)
 

@@ -1,6 +1,7 @@
 #include "db/db_manager.hpp"
 #include "services/fixtures.hpp"
 #include "db/repos/fixtures.hpp"
+#include "db/repos/tracker.hpp"
 #include <gtest/gtest.h>
 
 class TrackerTest : public ::testing::Test {};
@@ -58,4 +59,18 @@ TEST_F(TrackerTest, ImportsBothPerspectivesOnceAndRollsBackConflicts) {
   EXPECT_EQ(db->query("SELECT left_score FROM bouts WHERE id=?",
     {"ausfencer-demo-v1:epee-2026:A-101-102"})[0].at("left_score"), "5");
   EXPECT_EQ(db->query("SELECT * FROM bouts").size(), 44u);
+}
+
+TEST_F(TrackerTest, SearchesUnicodeAliasesDuplicateNamesAndBoundedPages) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  FixtureRepo(db).import_fixture(load_fixture(FIXTURE_DIR), true);
+  TrackerRepo repo(db);
+  EXPECT_EQ(repo.search("VALE mira").size(), 2u);
+  EXPECT_EQ(repo.search("M. Vale").size(), 1u);
+  EXPECT_EQ(repo.search("ESMÉ").size(), 1u);
+  EXPECT_TRUE(repo.search("%").empty());
+  EXPECT_EQ(repo.search("",2,10).size(), 1u);
+  EXPECT_THROW(repo.search("",0,10), std::invalid_argument);
+  EXPECT_THROW(repo.search("",1,101), std::invalid_argument);
+  EXPECT_TRUE(repo.profile(112).empty());
 }
