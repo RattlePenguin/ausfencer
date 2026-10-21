@@ -30,6 +30,15 @@ void ResultRepo::correct(const std::string &token, int bout, int revision, std::
     db_->query("UPDATE bouts SET disputed=EXISTS(SELECT 1 FROM reports WHERE bout_id=? AND state='pending') WHERE rowid=?",
                {before.at("id"),std::to_string(bout)});
     auto after = db_->query("SELECT * FROM bouts WHERE rowid=?", {std::to_string(bout)})[0];
+    if (winner != (before.count("winner_id") ? before.at("winner_id") : ""))
+      db_->query("UPDATE events SET coverage='partial' WHERE id=?", {before.at("event_id")});
+    auto conflicts = db_->query("SELECT id,payload FROM contributions WHERE bout_id=? AND state='conflict'", {before.at("id")});
+    for (const auto &conflict : conflicts) {
+      auto proposed = crow::json::load(conflict.at("payload"));
+      bool accepted = proposed && proposed["left_score"].s() == number(left) &&
+        proposed["right_score"].s() == number(right) && std::to_string(proposed["winner"].i()) == winner;
+      db_->query("UPDATE contributions SET state=? WHERE id=?", {accepted ? "published" : "rejected",conflict.at("id")});
+    }
     auto json = [](const DbRow &row) {
       crow::json::wvalue result;
       for (const auto &field : row) result[field.first] = field.second;

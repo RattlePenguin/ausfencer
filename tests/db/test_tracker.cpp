@@ -285,6 +285,10 @@ TEST_F(TrackerTest, CommunitySubmissionsPublishOnceAndCannotOverwriteAcceptedSco
   EXPECT_EQ(db->query("SELECT * FROM bouts").size(),44u);
   EXPECT_EQ(db->query("SELECT state FROM contributions ORDER BY id DESC LIMIT 1")[0].at("state"),"conflict");
   EXPECT_EQ(calculate_statistics(TrackerRepo(db).history(101)).wins,7);
+  auto reviewer=AccountRepo(db).create_demo_session("Reviewer","moderator");
+  results.correct(reviewer,44,0,5,2,"left","completed","Rejected conflicting evidence");
+  EXPECT_EQ(results.contributions(token)[0].at("state"),"rejected");
+  EXPECT_EQ(calculate_statistics(TrackerRepo(db).history(101)).wins,8);
 }
 
 TEST_F(TrackerTest, PublicTrackerRoutesValidatePaginationAndDisableCaching) {
