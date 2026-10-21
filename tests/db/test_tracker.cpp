@@ -209,3 +209,17 @@ TEST_F(TrackerTest, GuardianPublicationAndWithdrawalPersistAcrossReimports) {
   EXPECT_EQ(profiles.claims(guardian)[0].at("state"), "withdrawn");
   EXPECT_EQ(db->query("SELECT * FROM profile_audit").size(), 2u);
 }
+
+TEST_F(TrackerTest, UnregisteredPrivacyRequestsNeedAReviewedDecision) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  FixtureRepo(db).import_fixture(load_fixture(FIXTURE_DIR), true);
+  AccountRepo accounts(db); ProfileRepo profiles(db); TrackerRepo tracker(db);
+  auto reviewer = accounts.create_demo_session("Reviewer","moderator");
+  auto request = profiles.request_privacy(101,"fictional@example.invalid","Please hide this demo profile");
+  EXPECT_EQ(tracker.profile(101).size(), 1u);
+  EXPECT_THROW(profiles.review_privacy("",request,true), std::domain_error);
+  EXPECT_EQ(profiles.review_queue(reviewer).size(), 1u);
+  profiles.review_privacy(reviewer,request,true);
+  EXPECT_TRUE(tracker.profile(101).empty());
+  EXPECT_TRUE(profiles.review_queue(reviewer).empty());
+}

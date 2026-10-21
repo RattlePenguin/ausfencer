@@ -13,4 +13,7 @@ public:
   void set_visibility(const std::string &token, int id, bool visible) { change_visibility(token,id,visible,false); }
   void withdraw(const std::string &token, int id) { change_visibility(token,id,false,true); }
   DbRows claims(const std::string &token);
+  int request_privacy(int fencer, const std::string &contact, const std::string &evidence);
+  void review_privacy(const std::string &token, int request, bool hide);
+  DbRows review_queue(const std::string &token);
 };
