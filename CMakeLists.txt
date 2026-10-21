@@ -7,7 +7,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(FetchContent)
 
 find_package(Crow REQUIRED)
-find_package(Boost REQUIRED)
 find_package(SQLite3 REQUIRED)
 
 FetchContent_Declare(
@@ -17,12 +16,18 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(sqlite_orm)
 
+find_package(GTest QUIET)
+if(NOT GTest_FOUND)
 FetchContent_Declare(
   gtest
   GIT_REPOSITORY https://github.com/google/googletest.git
   GIT_TAG        063de7e9578f82b369302001269680b4b1553359
 )
 FetchContent_MakeAvailable(gtest)
+else()
+  add_library(gtest ALIAS GTest::gtest)
+  add_library(gtest_main ALIAS GTest::gtest_main)
+endif()
 
 add_executable(${PROJECT_NAME}
   src/main.cpp
@@ -37,11 +42,11 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} PRIVATE
   Crow::Crow
   sqlite_orm::sqlite_orm
+  SQLite3::SQLite3
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
   ${PROJECT_SOURCE_DIR}/include
-  ${Boost_INCLUDE_DIRS}
 )
 
 enable_testing()

@@ -12,7 +12,6 @@ add_executable(ausfencer_tests
 
 target_include_directories(ausfencer_tests PRIVATE
   ${CMAKE_SOURCE_DIR}/include
-  ${Boost_INCLUDE_DIRS}
 )
 
 target_link_libraries(ausfencer_tests PRIVATE
