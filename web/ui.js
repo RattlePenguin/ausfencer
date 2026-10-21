@@ -16,7 +16,9 @@ export async function api(path, options = {}) {
   const token = sessionStorage.getItem('demo-session');
   if (token) headers.Authorization = `Bearer ${token}`;
   const response = await fetch(`/api/${path}`, {...options, headers, cache: 'no-store'});
-  if (!response.ok) throw new Error(await response.text());
+  if (!response.ok) {
+    const error = new Error(await response.text()); error.status = response.status; throw error;
+  }
   return response.json();
 }
 export async function run(action) {
