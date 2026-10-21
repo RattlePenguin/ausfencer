@@ -7,6 +7,7 @@
 class FixtureRepo {
   std::shared_ptr<DbManager> db_;
   void write_context(const FixtureData &data);
+  void write_bouts(const FixtureData &data);
 public:
   explicit FixtureRepo(std::shared_ptr<DbManager> db) : db_(std::move(db)) {}
   // Preview executes the same writes, then rolls the transaction back.

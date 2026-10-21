@@ -41,3 +41,21 @@ TEST_F(TrackerTest, FixtureContextPreviewIsReversibleAndRepeatable) {
   EXPECT_EQ(db->query("SELECT * FROM entries").size(), 18u);
   EXPECT_EQ(db->query("SELECT visible FROM profiles WHERE fencer_id=112")[0].at("visible"), "0");
 }
+
+TEST_F(TrackerTest, ImportsBothPerspectivesOnceAndRollsBackConflicts) {
+  auto db = std::make_shared<DbManager>(":memory:");
+  FixtureRepo repo(db);
+  auto data = load_fixture(FIXTURE_DIR);
+  auto mirror = data.bouts[0];
+  std::swap(mirror.left,mirror.right); std::swap(mirror.left_score,mirror.right_score);
+  data.bouts.push_back(mirror);
+  repo.import_fixture(data, true); repo.import_fixture(data, true);
+  EXPECT_EQ(db->query("SELECT * FROM bouts").size(), 44u);
+  EXPECT_EQ(db->query("SELECT * FROM observations").size(), 44u);
+  auto changed = load_fixture(FIXTURE_DIR);
+  changed.bouts[0].left_score = 4;
+  EXPECT_THROW(repo.import_fixture(changed, true), std::invalid_argument);
+  EXPECT_EQ(db->query("SELECT left_score FROM bouts WHERE id=?",
+    {"ausfencer-demo-v1:epee-2026:A-101-102"})[0].at("left_score"), "5");
+  EXPECT_EQ(db->query("SELECT * FROM bouts").size(), 44u);
+}

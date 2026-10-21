@@ -20,6 +20,7 @@ FetchContent_MakeAvailable(sqlite_orm)
 add_library(tracker_domain src/services/fixtures.cpp)
 target_sources(tracker_domain PRIVATE src/services/fixture_validation.cpp)
 target_sources(tracker_domain PRIVATE src/db/repos/fixtures.cpp)
+target_sources(tracker_domain PRIVATE src/db/repos/fixture_bouts.cpp)
 target_include_directories(tracker_domain PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(tracker_domain PUBLIC Crow::Crow sqlite_orm::sqlite_orm SQLite3::SQLite3 OpenSSL::Crypto)
 

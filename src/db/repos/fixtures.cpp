@@ -36,6 +36,7 @@ void FixtureRepo::import_fixture(const FixtureData &data, bool approved) {
       throw std::invalid_argument("This database is not the demo dataset");
     db_->query("INSERT INTO tracker_meta VALUES('dataset','ausfencer-demo-v1') ON CONFLICT DO NOTHING");
     write_context(data);
+    write_bouts(data);
     db_->query(approved ? "COMMIT" : "ROLLBACK");
   } catch (...) {
     db_->query("ROLLBACK");
