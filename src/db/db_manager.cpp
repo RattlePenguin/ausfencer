@@ -9,7 +9,8 @@ DbManager::DbManager(const std::string &db_name)
   query("PRAGMA foreign_keys = ON");
   query("PRAGMA busy_timeout = 5000");
   // Keep legacy records while adding versioned domain tables separately.
-  storage_.sync_schema();
+  check_tracker_schema(*this);
+  storage_.sync_schema(true);
   migrate_tracker(*this);
 }
 

@@ -1,6 +1,8 @@
 #include "db/db_manager.hpp"
 #include "db/migrations.hpp"
 #include <gtest/gtest.h>
+#include <chrono>
+#include <filesystem>
 
 class DbManagerTest : public ::testing::Test {
 protected:
@@ -82,4 +84,37 @@ TEST_F(DbManagerTest, PreparedQueriesPreserveEmbeddedNulls) {
   std::string value("Demo\0Name",9);
   auto rows=db.query("SELECT ? AS value",{value});
   EXPECT_EQ(rows[0].at("value"),value);
+}
+
+TEST_F(DbManagerTest, UpgradesAnExistingLegacyDatabaseWithoutLosingRecords) {
+  auto path=std::string(TEST_ARTIFACT_DIR)+"/legacy-"+
+    std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())+".db";
+  sqlite3 *raw=nullptr; ASSERT_EQ(sqlite3_open(path.c_str(),&raw),SQLITE_OK);
+  ASSERT_EQ(sqlite3_exec(raw,R"(CREATE TABLE fencers(id INTEGER PRIMARY KEY AUTOINCREMENT,
+    first_name TEXT NOT NULL,last_name TEXT NOT NULL,birth_year INTEGER NOT NULL);
+    INSERT INTO fencers VALUES(7,'Legacy','Demo',2000);)",nullptr,nullptr,nullptr),SQLITE_OK);
+  sqlite3_close(raw);
+  {
+    DbManager db(path);
+    EXPECT_EQ(db.get_storage().get<Fencer>(7).first_name,"Legacy");
+    EXPECT_EQ(db.query("PRAGMA user_version")[0].at("user_version"),"5");
+    EXPECT_EQ(db.get_storage().insert(Fencer{0,"Next","Demo",2001}),8);
+  }
+  EXPECT_TRUE(std::filesystem::remove(path));
+}
+
+TEST_F(DbManagerTest, RefusesFutureSchemasBeforeLegacySchemaSync) {
+  auto path=std::string(TEST_ARTIFACT_DIR)+"/future-"+
+    std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())+".db";
+  sqlite3 *raw=nullptr; ASSERT_EQ(sqlite3_open(path.c_str(),&raw),SQLITE_OK);
+  ASSERT_EQ(sqlite3_exec(raw,"PRAGMA user_version=99",nullptr,nullptr,nullptr),SQLITE_OK);
+  sqlite3_close(raw);
+  EXPECT_THROW(DbManager db(path),std::runtime_error);
+  ASSERT_EQ(sqlite3_open(path.c_str(),&raw),SQLITE_OK);
+  sqlite3_stmt *statement=nullptr;
+  ASSERT_EQ(sqlite3_prepare_v2(raw,"SELECT count(*) FROM sqlite_master WHERE name='fencers'",-1,&statement,nullptr),SQLITE_OK);
+  ASSERT_EQ(sqlite3_step(statement),SQLITE_ROW);
+  EXPECT_EQ(sqlite3_column_int(statement,0),0);
+  sqlite3_finalize(statement); sqlite3_close(raw);
+  EXPECT_TRUE(std::filesystem::remove(path));
 }

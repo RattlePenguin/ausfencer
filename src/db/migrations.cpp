@@ -2,9 +2,14 @@
 #include "db/migrations.hpp"
 #include <stdexcept>
 
-void migrate_tracker(DbManager &db) {
+int check_tracker_schema(DbManager &db) {
   const int version = std::stoi(db.query("PRAGMA user_version")[0].at("user_version"));
   if (version > 5) throw std::runtime_error("Database schema is newer than this application");
+  return version;
+}
+
+void migrate_tracker(DbManager &db) {
+  const int version = check_tracker_schema(db);
   if (version >= 5) return;
   db.query("BEGIN IMMEDIATE");
   try {
