@@ -4,6 +4,8 @@
 #include "db/repos/tracker.hpp"
 #include <functional>
 
+struct TrackerNotFound : std::runtime_error { using std::runtime_error::runtime_error; };
+
 crow::json::wvalue public_rows(const DbRows &rows);
 crow::response tracker_response(const std::function<crow::json::wvalue()> &action);
 TrackerFilter tracker_filter(const crow::request &request);
