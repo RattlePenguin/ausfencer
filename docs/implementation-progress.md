@@ -122,3 +122,5 @@ Guest support, deletion policy, and all other step 2 API decisions remain open.
 - fix(http): translate validation and database exceptions into JSON errors: Wrap Fencer route actions with deliberate 400/409/500 responses and sanitized database failures. Exercise malformed/non-object JSON, wrong types, huge integers and blank names without writes; full build and 33/33 tests pass. Next: finish Fencer query and mutation validation.
 
 - fix(http): validate Fencer replacement bodies and pagination: Use strict bounded queries, C++17 aggregate initialization and atomic repository outcomes for PUT/DELETE. Populate real Crow query parameters in regression tests; verify search, invalid queries, unchanged rejected writes and missing mutations. Full build and 34/34 tests pass. Next: Bout JSON conversion.
+
+- feat(http): define complete Bout JSON validation and serialization: Implement all Bout fields, explicit null guests, weapon strings, bounded scores/cards/elapsed time and checked epoch seconds. Strict C++17 conversion probe passes; existing 34/34 tests remain green. Next: replace copied Bout collection handling.
