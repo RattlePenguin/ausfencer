@@ -18,27 +18,9 @@ crow::response FencerHandler::get_all(const crow::request &req) {
   auto q_param = req.url_params.get("q") ? req.url_params.get("q") : "";
   std::string q(q_param);
 
-  // Indicates page of fencers
-  int page{1};
-  auto page_param =
-      req.url_params.get("page") ? req.url_params.get("page") : "1";
-
-  try {
-    page = std::max(1, std::stoi(page_param));
-  } catch (const std::exception &e) {
-    std::cerr << e.what() << '\n';
-  }
-
-  // Indicates limit of how many entries on one page
-  int limit{10};
-  auto limit_param =
-      req.url_params.get("limit") ? req.url_params.get("limit") : "10";
-
-  try {
-    limit = std::max(1, std::stoi(limit_param));
-  } catch (const std::exception &e) {
-    std::cerr << e.what() << '\n';
-  }
+  const int page = input::query(req, "page", 1);
+  const int limit = input::query(req, "limit", 10);
+  page_offset(page, limit);
 
   crow::json::wvalue res;
   crow::json::wvalue::list fencers;
@@ -86,21 +68,11 @@ crow::response FencerHandler::create(const crow::request &req) {
 }
 
 crow::response FencerHandler::update(int id, const crow::request &req) {
-  auto old_fencer{this->repo_->get(id)};
-
-  if (!old_fencer) {
-    return this->not_found("Fencer not found");
-  }
-
-  crow::json::rvalue json{crow::json::load(req.body)};
-  Fencer updated_fencer{
-      .id = old_fencer->id,
-      .first_name = json["first_name"].s(),
-      .last_name = json["last_name"].s(),
-      .birth_year = static_cast<int>(json["birth_year"].i()),
-  };
-
-  this->repo_->update(updated_fencer);
+  auto json = input::object(req.body);
+  Fencer updated_fencer{id, input::name(json, "first_name"),
+                        input::name(json, "last_name"),
+                        static_cast<int>(input::integer(json, "birth_year", 1, 9999))};
+  if (!repo_->update(updated_fencer)) return not_found("Fencer not found");
 
   crow::json::wvalue res;
   res["id"] = updated_fencer.id;
@@ -111,13 +83,7 @@ crow::response FencerHandler::update(int id, const crow::request &req) {
 }
 
 crow::response FencerHandler::remove(int id) {
-  auto old_fencer{this->repo_->get(id)};
-
-  if (!old_fencer) {
-    return this->not_found("Fencer not found");
-  }
-
-  this->repo_->remove(id);
+  if (!repo_->remove(id)) return not_found("Fencer not found");
 
   crow::json::wvalue res;
   res["success"] = true;

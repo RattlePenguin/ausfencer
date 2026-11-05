@@ -25,7 +25,9 @@ protected:
   crow::response handle_request(const std::string &url, crow::HTTPMethod method,
                                 const std::string &body = "") {
     crow::request req;
-    req.url = url;
+    req.raw_url = url;
+    req.url = url.substr(0, url.find('?'));
+    req.url_params = crow::query_string(url);
     req.method = method;
     req.body = body;
 
@@ -138,4 +140,24 @@ TEST_F(FencerHandlerTest, InvalidCreateIsJson400AndDoesNotWrite) {
     EXPECT_FALSE(std::string(json["message"].s()).empty());
   }
   EXPECT_TRUE(repo_->get_all("", 1, 10).empty());
+}
+
+TEST_F(FencerHandlerTest, QueryValidationAndRejectedReplacement) {
+  const int id = repo_->create({0, "Alice", "Smith", 2000});
+  repo_->create({0, "Bob", "Jones", 2001});
+  for (const std::string query : {"page=0", "page=2junk", "page=", "page=-1",
+       "limit=101", "limit=0", "page=2147483648", "limit=1.5"}) {
+    EXPECT_EQ(handle_request("/api/fencers?" + query, crow::HTTPMethod::GET).code, 400);
+  }
+  auto filtered = handle_request("/api/fencers?q=Smith&page=1&limit=1", crow::HTTPMethod::GET);
+  auto json = crow::json::load(filtered.body);
+  ASSERT_EQ(filtered.code, 200);
+  ASSERT_EQ(json["fencers"].size(), 1u);
+  EXPECT_EQ(json["fencers"][0]["id"].i(), id);
+  const auto url = "/api/fencers/" + std::to_string(id);
+  EXPECT_EQ(handle_request(url, crow::HTTPMethod::PUT, "{}").code, 400);
+  EXPECT_EQ(repo_->get(id)->first_name, "Alice");
+  const std::string body = R"({"first_name":"A","last_name":"B","birth_year":2000})";
+  EXPECT_EQ(handle_request("/api/fencers/999", crow::HTTPMethod::PUT, body).code, 404);
+  EXPECT_EQ(handle_request("/api/fencers/999", crow::HTTPMethod::DELETE).code, 404);
 }
