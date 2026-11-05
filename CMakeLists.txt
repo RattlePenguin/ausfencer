@@ -8,8 +8,19 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
 
-find_package(Crow REQUIRED)
 find_package(Boost REQUIRED)
+find_package(Threads REQUIRED)
+# Crow is header-only; its installed CMake package may require standalone Asio
+# even when using the supported Boost networking backend.
+find_path(CROW_INCLUDE_DIR crow.h)
+if(NOT CROW_INCLUDE_DIR)
+  message(FATAL_ERROR "Crow headers (crow.h) are required")
+endif()
+add_library(ausfencer_http INTERFACE)
+target_include_directories(ausfencer_http SYSTEM INTERFACE
+  ${CROW_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
+target_compile_definitions(ausfencer_http INTERFACE CROW_USE_BOOST)
+target_link_libraries(ausfencer_http INTERFACE Threads::Threads)
 find_package(SQLite3 REQUIRED)
 
 FetchContent_Declare(
@@ -39,7 +50,7 @@ add_executable(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-  Crow::Crow
+  ausfencer_http
   sqlite_orm::sqlite_orm
 )
 
@@ -51,6 +62,3 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 enable_testing()
 include(GoogleTest)
 add_subdirectory(tests)
-
-# Use the declared Boost dependency for Crow networking.
-target_compile_definitions(${PROJECT_NAME} PRIVATE CROW_USE_BOOST)

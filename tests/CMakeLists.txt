@@ -24,12 +24,9 @@ target_include_directories(ausfencer_tests PRIVATE
 target_link_libraries(ausfencer_tests PRIVATE
   gtest
   gtest_main
-  Crow::Crow
+  ausfencer_http
   sqlite_orm::sqlite_orm
   SQLite3::SQLite3
 )
 
 gtest_discover_tests(ausfencer_tests)
-
-# Use the declared Boost dependency for Crow networking.
-target_compile_definitions(ausfencer_tests PRIVATE CROW_USE_BOOST)
