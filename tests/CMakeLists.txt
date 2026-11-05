@@ -12,6 +12,7 @@ add_executable(ausfencer_tests
   ${CMAKE_SOURCE_DIR}/src/db/repos/bouts.cpp
   ${CMAKE_SOURCE_DIR}/src/handlers/base.cpp
   ${CMAKE_SOURCE_DIR}/src/handlers/fencers.cpp
+  ${CMAKE_SOURCE_DIR}/src/handlers/bouts.cpp
 )
 
 target_include_directories(ausfencer_tests PRIVATE

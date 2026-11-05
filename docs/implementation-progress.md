@@ -128,3 +128,5 @@ Guest support, deletion policy, and all other step 2 API decisions remain open.
 - feat(http): implement ordered Bout collection and participant filtering: Replace copied Fencer search with page/limit and optional fencer_id, serialize complete Bout objects and document guest keys. Full current build and 34/34 tests pass; Bout handler remains outside targets until remaining scaffold methods are repaired. Next: item retrieval and creation.
 
 - feat(http): implement Bout item retrieval and creation: Retrieve actual Bout fields and return complete created objects with generated IDs using the selected validation contract. Full current build and 34/34 tests pass; final copied update method remains unwired. Next: replace mutations and compile the complete handler.
+
+- feat(http): complete Bout mutations and include the handler in both targets: Implement full replacement and atomic missing-row deletion, wrap every Bout route with JSON error translation, and compile Bout repository/handler in production and tests. Full build and 34/34 existing tests pass. Next: production registration and real Bout route tests.

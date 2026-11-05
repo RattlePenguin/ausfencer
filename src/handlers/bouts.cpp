@@ -41,39 +41,14 @@ crow::response BoutHandler::create(const crow::request &req) {
 }
 
 crow::response BoutHandler::update(int id, const crow::request &req) {
-  auto old_bout{this->repo_->get(id)};
-
-  if (!old_bout) {
-    return this->not_found("Bout not found");
-  }
-
-  crow::json::rvalue json{crow::json::load(req.body)};
-  Bout updated_bout{
-      .id = old_bout->id,
-      .first_name = json["first_name"].s(),
-      .last_name = json["last_name"].s(),
-      .birth_year = static_cast<int>(json["birth_year"].i()),
-  };
-
-  this->repo_->update(updated_bout);
-
-  crow::json::wvalue res;
-  res["id"] = updated_bout.id;
-  res["first_name"] = updated_bout.first_name;
-  res["last_name"] = updated_bout.last_name;
-  res["birth_year"] = updated_bout.birth_year;
-  return crow::response(crow::OK, res);
+  auto bout = bout_json::parse(req.body);
+  bout.id = id;
+  if (!repo_->update(bout)) return not_found("Bout not found");
+  return crow::response(crow::OK, bout_json::serialize(bout));
 }
 
 crow::response BoutHandler::remove(int id) {
-  auto old_bout{this->repo_->get(id)};
-
-  if (!old_bout) {
-    return this->not_found("Bout not found");
-  }
-
-  this->repo_->remove(id);
-
+  if (!repo_->remove(id)) return not_found("Bout not found");
   crow::json::wvalue res;
   res["success"] = true;
   return crow::response(crow::OK, res);
@@ -82,24 +57,24 @@ crow::response BoutHandler::remove(int id) {
 void BoutHandler::register_routes(App &app) {
   app.route_dynamic(this->basePath_)
       .methods(crow::HTTPMethod::GET)(
-          [this](const crow::request &req) { return this->get_all(req); });
+          [this](const crow::request &req) { return checked([&] { return this->get_all(req); }); });
 
   app.route_dynamic(this->basePath_ + "/<int>")
       .methods(crow::HTTPMethod::GET)(
-          [this](const crow::request &req, int id) { return this->get(id); });
+          [this](const crow::request &req, int id) { return checked([&] { return this->get(id); }); });
 
   app.route_dynamic(this->basePath_)
       .methods(crow::HTTPMethod::POST)(
-          [this](const crow::request &req) { return this->create(req); });
+          [this](const crow::request &req) { return checked([&] { return this->create(req); }); });
 
   app.route_dynamic(this->basePath_ + "/<int>")
       .methods(crow::HTTPMethod::PUT)([this](const crow::request &req, int id) {
-        return this->update(id, req);
+        return checked([&] { return this->update(id, req); });
       });
 
   app.route_dynamic(this->basePath_ + "/<int>")
       .methods(crow::HTTPMethod::DELETE)(
           [this](const crow::request &req, int id) {
-            return this->remove(id);
+            return checked([&] { return this->remove(id); });
           });
 }
