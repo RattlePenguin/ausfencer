@@ -22,14 +22,20 @@ std::unique_ptr<Bout> BoutRepo::get(int id) {
   return db_mgr_->get_storage().get_pointer<Bout>(id);
 }
 
-void BoutRepo::update(const Bout &bout) {
+bool BoutRepo::update(const Bout &bout) {
   auto lock = db_mgr_->acquire_lock();
-  return db_mgr_->get_storage().update<Bout>(bout);
+  auto &storage = db_mgr_->get_storage();
+  if (!storage.get_pointer<Bout>(bout.id)) return false;
+  storage.update(bout);
+  return true;
 }
 
-void BoutRepo::remove(int id) {
+bool BoutRepo::remove(int id) {
   auto lock = db_mgr_->acquire_lock();
-  return db_mgr_->get_storage().remove<Bout>(id);
+  auto &storage = db_mgr_->get_storage();
+  if (!storage.get_pointer<Bout>(id)) return false;
+  storage.remove<Bout>(id);
+  return true;
 }
 
 std::vector<Bout> BoutRepo::get_all(const int page, const int limit) {

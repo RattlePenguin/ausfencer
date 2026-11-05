@@ -87,3 +87,12 @@ TEST_F(FencerRepoTest, RejectsInvalidPaginationAndHandlesLargeOffsets) {
   EXPECT_THROW(repo_->get_all("", 1, 0), std::invalid_argument);
   EXPECT_TRUE(repo_->get_all("", 2147483647, 100).empty());
 }
+
+TEST_F(FencerRepoTest, MissingMutationsReturnFalse) {
+  EXPECT_FALSE(repo_->update({999, "Absent", "Fencer", 2000}));
+  EXPECT_FALSE(repo_->remove(999));
+  int id = repo_->create({0, "Present", "Fencer", 2000});
+  EXPECT_TRUE(repo_->update({id, "Updated", "Fencer", 2001}));
+  EXPECT_TRUE(repo_->remove(id));
+  EXPECT_FALSE(repo_->update({id, "Absent", "Fencer", 2000}));
+}

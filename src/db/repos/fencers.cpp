@@ -22,14 +22,20 @@ std::unique_ptr<Fencer> FencerRepo::get(int id) {
   return db_mgr_->get_storage().get_pointer<Fencer>(id);
 }
 
-void FencerRepo::update(const Fencer &fencer) {
+bool FencerRepo::update(const Fencer &fencer) {
   auto lock = db_mgr_->acquire_lock();
-  return db_mgr_->get_storage().update<Fencer>(fencer);
+  auto &storage = db_mgr_->get_storage();
+  if (!storage.get_pointer<Fencer>(fencer.id)) return false;
+  storage.update(fencer);
+  return true;
 }
 
-void FencerRepo::remove(int id) {
+bool FencerRepo::remove(int id) {
   auto lock = db_mgr_->acquire_lock();
-  return db_mgr_->get_storage().remove<Fencer>(id);
+  auto &storage = db_mgr_->get_storage();
+  if (!storage.get_pointer<Fencer>(id)) return false;
+  storage.remove<Fencer>(id);
+  return true;
 }
 
 std::vector<Fencer> FencerRepo::get_all(const std::string &q, const int page,

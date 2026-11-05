@@ -4,6 +4,7 @@
 #include "models/Bout.hpp"
 #include <gtest/gtest.h>
 #include <memory>
+#include <future>
 
 class BoutRepoTest : public ::testing::Test {
 protected:
@@ -145,4 +146,24 @@ TEST_F(BoutRepoTest, ForeignKeysRejectOrphansAndPreserveHistory) {
   EXPECT_THROW(fencers.remove(left_), std::system_error);
   EXPECT_THROW(fencers.remove(right_), std::system_error);
   EXPECT_NE(fencers.get(left_), nullptr);
+}
+
+TEST_F(BoutRepoTest, CoordinatedDeleteAndUpdateReportPersistedOutcomes) {
+  auto bout = fixture();
+  bout.id = repo_->create(bout);
+  std::promise<void> deleted;
+  auto done = deleted.get_future();
+  auto remover = std::async(std::launch::async, [&] {
+    const bool removed = repo_->remove(bout.id);
+    deleted.set_value();
+    return removed;
+  });
+  auto updater = std::async(std::launch::async, [&] {
+    done.wait();
+    return repo_->update(bout);
+  });
+  EXPECT_TRUE(remover.get());
+  EXPECT_FALSE(updater.get());
+  EXPECT_FALSE(repo_->remove(bout.id));
+  EXPECT_EQ(repo_->get(bout.id), nullptr);
 }

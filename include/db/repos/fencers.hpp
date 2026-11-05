@@ -17,11 +17,12 @@ public:
   // Getter for Fencer with id
   std::unique_ptr<Fencer> get(int id);
 
+  // Returns false if missing; existence and mutation share the database lock.
   // Updates Fencer, id is taken from the Fencer object itself
-  void update(const Fencer &fencer);
+  bool update(const Fencer &fencer);
 
   // Removes Fencer with given id
-  void remove(int id);
+  bool remove(int id);
 
   // Returns a list of all fencers
   // Accepts q, page, and limit for limiting results

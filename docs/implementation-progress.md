@@ -114,3 +114,5 @@ Guest support, deletion policy, and all other step 2 API decisions remain open.
 - docs: settle Bout fields, guest policy and HTTP errors: Select nullable anonymous guests, protected Fencer history, string weapons, explicit timestamps and elapsed time. Specify complete PUT bodies, bounded strict pagination and status codes before handler implementation. Reviewed against repositories; existing full build and 29 tests remain green. Next: nullable persistence and upgrade checks.
 
 - feat(db): allow anonymous guests and preserve legacy bout records: Map participant IDs to optional integers and use preserving schema synchronization. Upgrade an exact legacy table, verify all fields, guest insertion, generated IDs, FK rejection and file-backed reopen; full build and 30/30 tests pass. Next: atomic mutation outcomes.
+
+- fix(db): report mutation existence under the shared database lock: Return bool from updates/deletions after checking existence while holding the same manager lock. Add coordinated asynchronous delete-before-update coverage and Fencer missing/success outcomes; full build and 32/32 tests pass. Next: shared HTTP validation.

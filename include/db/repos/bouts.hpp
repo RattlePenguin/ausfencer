@@ -17,11 +17,12 @@ public:
   // Getter for Bout with id
   std::unique_ptr<Bout> get(int id);
 
+  // Returns false if missing; existence and mutation share the database lock.
   // Updates Bout, id is taken from the Bout object itself
-  void update(const Bout &bout);
+  bool update(const Bout &bout);
 
   // Removes Bout with given id
-  void remove(int id);
+  bool remove(int id);
 
   // Returns a list of all bouts
   // Accepts page and limit for limiting results
