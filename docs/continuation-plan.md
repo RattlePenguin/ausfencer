@@ -1,7 +1,10 @@
 # Continuation plan and logical-flow review
 
-Reviewed baseline: `54e1ffe`, 2026-10-08. This document records future work;
-no application, test, or build defects were fixed during the review.
+Reviewed baseline: `54e1ffe`, 2026-10-08. The findings below are historical.
+**Completion update, 2026-11-05:** all five milestone steps are complete.
+See [current status and resolution evidence](implementation-status.md) and the
+[selected API contract](api-contract.md). Normal and strict C++17/UBSan builds
+both pass all 48 tests, including production HTTP and persistent restarts.
 Read [project context](project-context.md) for architecture, contracts, and setup.
 
 Implementation began on 2026-10-09 on `bout/crud`. Read the
@@ -166,15 +169,15 @@ references or actions. The three existing DbManager tests now pass. See the
 
 - [x] Provision compatible CMake, Crow, Boost, SQLite development files, compiler,
   and access to the pinned FetchContent repositories. Record versions.
-- [ ] Verify V01 and V03 against the exact pinned sqlite_orm, then resolve confirmed
+- [x] Verify V01 and V03 against the exact pinned sqlite_orm, then resolve confirmed
   dependency/build issues, B07, and B08 without unnecessary dependency upgrades.
-- [ ] Replace B01's copied tests. Create two or more Fencers through FencerRepo
+- [x] Replace B01's copied tests. Create two or more Fencers through FencerRepo
   sharing the fixture's DbManager, then initialize every Bout field explicitly.
-- [ ] Cover generated IDs, every field round trip, missing IDs, all mutable fields
+- [x] Cover generated IDs, every field round trip, missing IDs, all mutable fields
   on update, removal, empty lists, and multiple pages with distinct results.
-- [ ] Verify left/right participant matching, exclusion of unrelated Bouts, one
+- [x] Verify left/right participant matching, exclusion of unrelated Bouts, one
   result when a Bout matches both sides, and filtered pagination. Address V04.
-- [ ] Verify V02 with both invalid left and invalid right IDs on create/update and
+- [x] Verify V02 with both invalid left and invalid right IDs on create/update and
   deletion of referenced Fencers. Establish a green repository/Fencer baseline.
 
 Exit condition: the application target and repaired existing test target build;
@@ -182,79 +185,79 @@ all repository tests pass; persistence and FK behavior are recorded.
 
 ### 2. Settle the Bout contract and participant policy
 
-- [ ] Write the selected request/response shapes and validation/error rules before
+- [x] Write the selected request/response shapes and validation/error rules before
   completing the copied handler. Proposed routes: collection GET/POST and item
   GET/PUT/DELETE at `/api/bouts`, plus collection query `fencer_id` to use the
   existing participant-filter repository method. This routing is a proposal.
-- [ ] Decide guest support. Existing `int` FK fields require existing Fencers.
+- [x] Decide guest support. Existing `int` FK fields require existing Fencers.
   Options are nullable participant IDs (with optional stored display names), or
   guest Fencer records created as part of the Bout operation. Nullable IDs better
   match “without creating a fencer”; they require model/schema changes and lose
   identity-based history for anonymous guests. Guest records preserve identity
   but need explicit metadata/defaults and transaction handling. Do not invent a
   sentinel ID, weaken FK enforcement, or equate unknown IDs with intentional guests.
-- [ ] Set referenced-Fencer deletion behavior. Recommended initial policy: reject
+- [x] Set referenced-Fencer deletion behavior. Recommended initial policy: reject
   deletion with a clear 409 error while history references the Fencer. Guest/null
   or soft-deletion alternatives need explicit migration and history semantics.
-- [ ] Set weapon JSON representation and persistence together. A proposed external
+- [x] Set weapon JSON representation and persistence together. A proposed external
   representation is `"foil"`, `"epee"`, `"sabre"`; validate before conversion.
-- [ ] Define timestamp as an explicit unit/convention (proposed UTC epoch seconds),
+- [x] Define timestamp as an explicit unit/convention (proposed UTC epoch seconds),
   who supplies/defaults it, and overflow-safe conversion to `time_t`.
-- [ ] Define `time` meaning and accepted range, scores 0–99, card count bounds, and
+- [x] Define `time` meaning and accepted range, scores 0–99, card count bounds, and
   whether equal participant IDs are valid. Do not derive strict fencing rules
   solely from informal model comments.
-- [ ] Define PUT as full replacement or document different semantics. Use route ID
+- [x] Define PUT as full replacement or document different semantics. Use route ID
   as authoritative. Proposed responses retain Fencer-style object/list envelopes
   and 200 success statuses for consistency; deliberately choose alternatives.
-- [ ] Define 400 validation errors, 404 absent resources, 409 FK/conflict errors,
+- [x] Define 400 validation errors, 404 absent resources, 409 FK/conflict errors,
   and 500 unexpected database failures. Avoid exposing raw database diagnostics.
-- [ ] Select bounded, strictly parsed pagination and stable ordering for both APIs.
+- [x] Select bounded, strictly parsed pagination and stable ordering for both APIs.
 
 Exit condition: guest and deletion policies, all field semantics, routes, and
 error statuses are written down as selected decisions, not left as assumptions.
 
 ### 3. Finish Bout handlers and production integration
 
-- [ ] Replace B02's stale Fencer fields and list signature; serialize every Bout
+- [x] Replace B02's stale Fencer fields and list signature; serialize every Bout
   field consistently for collection, item, create, and update responses.
-- [ ] Implement the selected validation, FK/guest policy, and error translation.
+- [x] Implement the selected validation, FK/guest policy, and error translation.
   Reuse parsing/serialization helpers where useful without broad restructuring.
-- [ ] Implement participant filtering and safe pagination. Do not reinterpret
+- [x] Implement participant filtering and safe pagination. Do not reinterpret
   stale `q` name-search comments as an existing Bout search requirement.
-- [ ] Add `src/db/repos/bouts.cpp` and `src/handlers/bouts.cpp` to production;
+- [x] Add `src/db/repos/bouts.cpp` and `src/handlers/bouts.cpp` to production;
   add the handler source and new handler tests to the test target.
-- [ ] Register a BoutHandler using the same DbManager as FencerHandler.
+- [x] Register a BoutHandler using the same DbManager as FencerHandler.
   Preserve handler lifetimes for Crow callbacks.
-- [ ] Address B05 before using a persistent server smoke test.
+- [x] Address B05 before using a persistent server smoke test.
 
 Exit condition: both APIs are reachable in the real Server and use the same
 database; starting it does not insert unsolicited data.
 
 ### 4. Fix existing flow defects and add regression coverage
 
-- [ ] Resolve B03 and B04 for Fencer and Bout routes. Cover malformed JSON,
+- [x] Resolve B03 and B04 for Fencer and Bout routes. Cover malformed JSON,
   non-object JSON, missing/wrong-type fields, narrowing overflow, invalid weapons,
   participant errors, score/card/time bounds, and query overflow/limits.
-- [ ] Resolve B06 with atomic persistence semantics or explicitly documented
+- [x] Resolve B06 with atomic persistence semantics or explicitly documented
   accepted no-op behavior. Test the chosen behavior with coordinated concurrent
   operations, not timing-dependent sleeps. Do not nest locks on the same manager.
-- [ ] Test collection/filter query handling with genuinely populated Crow query
+- [x] Test collection/filter query handling with genuinely populated Crow query
   parameters; the existing synthetic helper does not parse them automatically.
-- [ ] Cover missing item GET/PUT/DELETE, unchanged data after rejected writes,
+- [x] Cover missing item GET/PUT/DELETE, unchanged data after rejected writes,
   generated IDs, all fields in responses, and history-preserving Fencer deletion.
-- [ ] Add a file-backed reopen/persistence check and representative schema-upgrade
+- [x] Add a file-backed reopen/persistence check and representative schema-upgrade
   checks if step 2 changes storage. Verify no orphaned references remain.
-- [ ] Resolve B09 and B10 as small separate follow-ups, with behavior checks.
+- [x] Resolve B09 and B10 as small separate follow-ups, with behavior checks.
 
 ### 5. Verify the milestone and refresh context
 
-- [ ] Configure/build both targets and run CTest. Record actual results and versions.
-- [ ] Smoke-test the real server in a temporary working directory: create Fencers,
+- [x] Configure/build both targets and run CTest. Record actual results and versions.
+- [x] Smoke-test the real server in a temporary working directory: create Fencers,
   create/get/list/filter/update/delete a Bout, exercise chosen guest and deletion
   behavior, then restart and verify retained data and absence of seeded entries.
-- [ ] Update README with prerequisites, payload examples, routes, field meanings,
+- [x] Update README with prerequisites, payload examples, routes, field meanings,
   error responses, database location, and the chosen guest policy.
-- [ ] Refresh AGENTS/context status and mark findings resolved with evidence.
+- [x] Refresh AGENTS/context status and mark findings resolved with evidence.
 
 Definition of done: builds and tests pass; Bout CRUD and participant history work
 through production routes; invalid writes cannot silently corrupt data; guest
