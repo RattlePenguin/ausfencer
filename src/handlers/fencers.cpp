@@ -127,24 +127,24 @@ crow::response FencerHandler::remove(int id) {
 void FencerHandler::register_routes(App &app) {
   app.route_dynamic(this->basePath_)
       .methods(crow::HTTPMethod::GET)(
-          [this](const crow::request &req) { return this->get_all(req); });
+          [this](const crow::request &req) { return checked([&] { return this->get_all(req); }); });
 
   app.route_dynamic(this->basePath_ + "/<int>")
       .methods(crow::HTTPMethod::GET)(
-          [this](const crow::request &req, int id) { return this->get(id); });
+          [this](const crow::request &req, int id) { return checked([&] { return this->get(id); }); });
 
   app.route_dynamic(this->basePath_)
       .methods(crow::HTTPMethod::POST)(
-          [this](const crow::request &req) { return this->create(req); });
+          [this](const crow::request &req) { return checked([&] { return this->create(req); }); });
 
   app.route_dynamic(this->basePath_ + "/<int>")
       .methods(crow::HTTPMethod::PUT)([this](const crow::request &req, int id) {
-        return this->update(id, req);
+        return checked([&] { return this->update(id, req); });
       });
 
   app.route_dynamic(this->basePath_ + "/<int>")
       .methods(crow::HTTPMethod::DELETE)(
           [this](const crow::request &req, int id) {
-            return this->remove(id);
+            return checked([&] { return this->remove(id); });
           });
 }

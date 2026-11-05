@@ -122,3 +122,20 @@ TEST_F(FencerHandlerTest, DeleteFencerSuccess) {
                                 crow::HTTPMethod::GET);
   EXPECT_EQ(get_res.code, 404);
 }
+
+TEST_F(FencerHandlerTest, InvalidCreateIsJson400AndDoesNotWrite) {
+  for (const std::string body : {"{", "null", "[]", "{}",
+       R"({"first_name":3,"last_name":"B","birth_year":2000})",
+       R"({"first_name":"A","last_name":"B","birth_year":1.5})",
+       R"({"first_name":"A","last_name":"B","birth_year":184467440737095516160})",
+       R"({"first_name":"A","last_name":"B","birth_year":true})",
+       R"({"first_name":" ","last_name":"B","birth_year":2000})"}) {
+    auto response = handle_request("/api/fencers", crow::HTTPMethod::POST, body);
+    EXPECT_EQ(response.code, 400) << body;
+    auto json = crow::json::load(response.body);
+    ASSERT_TRUE(json);
+    EXPECT_EQ(json["status"].s(), "error");
+    EXPECT_FALSE(std::string(json["message"].s()).empty());
+  }
+  EXPECT_TRUE(repo_->get_all("", 1, 10).empty());
+}

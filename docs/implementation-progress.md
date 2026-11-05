@@ -118,3 +118,5 @@ Guest support, deletion policy, and all other step 2 API decisions remain open.
 - fix(db): report mutation existence under the shared database lock: Return bool from updates/deletions after checking existence while holding the same manager lock. Add coordinated asynchronous delete-before-update coverage and Fencer missing/success outcomes; full build and 32/32 tests pass. Next: shared HTTP validation.
 
 - feat(http): add strict JSON field and query parsers: Add object, required-field, bounded integer, name and complete decimal-query validation. Use the helpers for Fencer creation with standard C++17 initialization; full build and 32/32 tests pass. Next: consistent route exception translation and invalid-input tests.
+
+- fix(http): translate validation and database exceptions into JSON errors: Wrap Fencer route actions with deliberate 400/409/500 responses and sanitized database failures. Exercise malformed/non-object JSON, wrong types, huge integers and blank names without writes; full build and 33/33 tests pass. Next: finish Fencer query and mutation validation.
