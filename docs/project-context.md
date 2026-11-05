@@ -1,5 +1,10 @@
 # Project context
 
+This document preserves the **2026-10-08 historical review**. The Bout CRUD
+milestone is now complete; read [current implementation status](implementation-status.md)
+and the [API contract](api-contract.md) for implemented behavior and validation.
+The baseline defects and environment limits below describe that earlier review.
+
 Reviewed on 2026-10-08 against `54e1ffe` (`readme`). All application headers,
 sources, tests, build files, README, and `notes` were read, with recent Git history
 used to identify the handoff point. `libs/sqlite/` is third-party amalgamated
