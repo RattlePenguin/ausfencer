@@ -87,25 +87,36 @@ TEST_F(BoutRepoTest, RemoveBout) {
   EXPECT_EQ(after_remove, nullptr);
 }
 
-TEST_F(BoutRepoTest, GetAllWithPaginationAndSearch) {
-  repo_->create(fixture());
-  repo_->create(fixture());
-  repo_->create(fixture());
-  repo_->create(fixture());
+TEST_F(BoutRepoTest, ListsHaveStableDistinctPages) {
+  EXPECT_TRUE(repo_->get_all(1, 10).empty());
+  const int a = repo_->create(fixture());
+  const int b = repo_->create(fixture());
+  const int c = repo_->create(fixture());
+  auto first = repo_->get_all(1, 2);
+  auto second = repo_->get_all(2, 2);
+  ASSERT_EQ(first.size(), 2u);
+  ASSERT_EQ(second.size(), 1u);
+  EXPECT_EQ(first[0].id, a);
+  EXPECT_EQ(first[1].id, b);
+  EXPECT_EQ(second[0].id, c);
+  EXPECT_TRUE(repo_->get_all(3, 2).empty());
+}
 
-  // Test get_all default without search
-  auto page1 = repo_->get_all(1, 2);
-  EXPECT_EQ(page1.size(), 2u);
-
-  auto page2 = repo_->get_all(2, 2);
-  EXPECT_EQ(page2.size(), 2u);
-
-  // Test get_all search filter for "Smith"
-  auto smiths = repo_->get_all(1, 10);
-  EXPECT_EQ(smiths.size(), 4u);
-
-  // Test get_all search filter for "Charlie"
-  auto charlie = repo_->get_all(1, 10);
-  ASSERT_EQ(charlie.size(), 4u);
-  EXPECT_EQ(charlie[0].left_fencer_id, left_);
+TEST_F(BoutRepoTest, HistoryMatchesEitherSideOnceAndPaginates) {
+  auto bout = fixture();
+  const int a = repo_->create(bout);
+  std::swap(bout.left_fencer_id, bout.right_fencer_id);
+  const int b = repo_->create(bout);
+  bout.right_fencer_id = left_;
+  const int c = repo_->create(bout);
+  bout.left_fencer_id = bout.right_fencer_id = right_;
+  repo_->create(bout);
+  auto first = repo_->get_all_by_fencer(left_, 1, 2);
+  auto second = repo_->get_all_by_fencer(left_, 2, 2);
+  ASSERT_EQ(first.size(), 2u);
+  ASSERT_EQ(second.size(), 1u);
+  EXPECT_EQ(first[0].id, a);
+  EXPECT_EQ(first[1].id, b);
+  EXPECT_EQ(second[0].id, c);
+  EXPECT_TRUE(repo_->get_all_by_fencer(999, 1, 10).empty());
 }

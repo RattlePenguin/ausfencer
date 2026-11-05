@@ -39,7 +39,7 @@ std::vector<Bout> BoutRepo::get_all(const int page, const int limit) {
 
   // Get all bouts, limited to limit after skipping offset * limit
   return db_mgr_->get_storage().get_all<Bout>(
-      sql::limit(limit, sql::offset(offset)));
+      sql::order_by(&Bout::id), sql::limit(limit, sql::offset(offset)));
 }
 
 std::vector<Bout> BoutRepo::get_all_by_fencer(const int fencer_id,
@@ -50,7 +50,7 @@ std::vector<Bout> BoutRepo::get_all_by_fencer(const int fencer_id,
   int offset{(page - 1) * limit};
 
   return db_mgr_->get_storage().get_all<Bout>(
-      sql::where(sql::like(&Bout::left_fencer_id, fencer_id) ||
-                 sql::like(&Bout::right_fencer_id, fencer_id)),
-      sql::limit(limit, sql::offset(offset)));
+      sql::where((sql::c(&Bout::left_fencer_id) == fencer_id) ||
+                 (sql::c(&Bout::right_fencer_id) == fencer_id)),
+      sql::order_by(&Bout::id), sql::limit(limit, sql::offset(offset)));
 }
