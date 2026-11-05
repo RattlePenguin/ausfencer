@@ -1,23 +1,24 @@
 # AusFencer agent entry point
 
-Start with [project context](docs/project-context.md), then read the
-[continuation plan and review findings](docs/continuation-plan.md).
-These describe the reviewed baseline at commit `54e1ffe` on 2026-10-08;
-check the current code and Git status before relying on their status claims.
+Start with [current implementation status](docs/implementation-status.md), then
+read the [API contract](docs/api-contract.md) and
+[continuation plan](docs/continuation-plan.md). The Bout CRUD milestone is complete
+as of 2026-11-05. [Project context](docs/project-context.md) preserves the historical
+review at `54e1ffe`; check current code and Git status before making changes.
 
 ## Project in one minute
 
-- A C++ HTTP backend for storing fencing participants and completed bouts.
-- Crow handles HTTP and JSON; sqlite_orm maps plain structs to SQLite.
-- Fencer CRUD is wired into the server. Bout CRUD is unfinished: its model,
-  schema, and repository exist, but its handler and tests are still Fencer copies.
-- There is no frontend, mobile referee screen, tournament system, or team model.
-- Production starts in `src/main.cpp`; dependency construction and route wiring
-  happen in `src/server.cpp`.
-- The schema lives in `include/db/db_manager.hpp`, not in SQL migration files.
-- Repositories serialize each database operation with the shared DbManager mutex.
-- `tests/db/repos/test_bout_repo.cpp` is in the test target and contains compile
-  errors. A green baseline has not been established.
+- A C++17 HTTP backend storing Fencers and completed bouts; no frontend or auth.
+- Crow handles HTTP/JSON; sqlite_orm maps structs to system SQLite.
+- Fencer and Bout CRUD plus participant history are registered in production.
+- Bout participants are existing IDs or explicit nulls for anonymous guests.
+  Referenced-Fencer deletion returns 409; history never cascades away.
+- Production starts in `src/main.cpp`; wiring happens in `src/server.cpp`.
+- Schema lives in `include/db/db_manager.hpp`. Transactional preserving sync
+  upgrades the previous non-null participant schema without losing records.
+- Both repositories share one DbManager and lock each operation. Update/delete
+  return bool for atomic missing-row outcomes under that lock.
+- Normal and strict C++17/UBSan builds pass 48 tests, including live HTTP/restarts.
 
 ## Where to work
 
@@ -39,12 +40,16 @@ check the current code and Git status before relying on their status claims.
 - Share one DbManager across both repositories. Direct storage access does not
   lock itself; avoid nesting repository calls under its non-recursive mutex.
 - Route callbacks capture handler `this`; keep handlers alive as the Server does.
-- Decide guest participants, referenced-Fencer deletion, and weapon persistence
-  before treating the Bout API contract as settled. These are open decisions.
+- Follow the settled API contract: string weapons, required UTC epoch seconds,
+  elapsed seconds, bounded scores/cards, complete PUT bodies and null guests.
+- Validate integer fields before narrowing. Lists use ascending IDs, positive
+  pages and limits 1-100; offsets use signed 64-bit arithmetic.
 - Register any new `.cpp` files in the appropriate CMake target; sources are listed
   explicitly, not discovered automatically.
-- Build commands, test coverage, dependency details, and validation limits are in
-  the context document. The database path is relative to the launch directory,
-  and starting the current server inserts a test Fencer into it.
-- The 2026-10-08 task produced documentation only. Listed defects remain unfixed;
-  the plan records future work and is not a claim that it has been implemented.
+- Build/test commands and payload examples are in README. Default database path
+  is relative to the launch directory; startup inserts no data. ServerConfig also
+  supports isolated database paths. HTTP smoke tests need a free port 8080.
+- Crow headers are copied into the build directory for a narrow constructor
+  initialization compatibility fix; never edit installed dependency headers.
+- Keep changes reviewed/tested and commit reasonable chunks with detailed bullet
+  messages, at most 100 added/deleted lines per commit. Preserve local policy edits.
