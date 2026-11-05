@@ -1,5 +1,6 @@
 #include "db/db_manager.hpp"
 #include "db/repos/bouts.hpp"
+#include "db/repos/fencers.hpp"
 #include "models/Bout.hpp"
 #include <gtest/gtest.h>
 #include <memory>
@@ -9,23 +10,39 @@ protected:
   std::shared_ptr<DbManager> db_mgr_;
   std::shared_ptr<BoutRepo> repo_;
 
+  int left_, right_;
+  Bout fixture() const {
+    return {0, left_, right_, 1700000000, Foil, 180, 15, 12, 1, 0, 0, 1};
+  }
+
   void SetUp() override {
     db_mgr_ = std::make_shared<DbManager>(":memory:");
     repo_ = std::make_shared<BoutRepo>(db_mgr_);
+    FencerRepo fencers(db_mgr_);
+    left_ = fencers.create({0, "Left", "Fencer", 2000});
+    right_ = fencers.create({0, "Right", "Fencer", 2001});
   }
 };
 
 TEST_F(BoutRepoTest, CreateAndGetBout) {
-  Bout bout{0, "Allan", "Goodman", 2002};
+  Bout bout = fixture();
   int id = repo_->create(bout);
   EXPECT_GT(id, 0);
 
   auto retrieved = repo_->get(id);
   ASSERT_NE(retrieved, nullptr);
   EXPECT_EQ(retrieved->id, id);
-  EXPECT_EQ(retrieved->first_name, "Allan");
-  EXPECT_EQ(retrieved->last_name, "Goodman");
-  EXPECT_EQ(retrieved->birth_year, 2002);
+  EXPECT_EQ(retrieved->left_fencer_id, left_);
+  EXPECT_EQ(retrieved->right_fencer_id, right_);
+  EXPECT_EQ(retrieved->timestamp, bout.timestamp);
+  EXPECT_EQ(retrieved->weapon, Foil);
+  EXPECT_EQ(retrieved->time, 180);
+  EXPECT_EQ(retrieved->left_score, 15);
+  EXPECT_EQ(retrieved->right_score, 12);
+  EXPECT_EQ(retrieved->left_yellow, 1);
+  EXPECT_EQ(retrieved->right_yellow, 0);
+  EXPECT_EQ(retrieved->left_red, 0);
+  EXPECT_EQ(retrieved->right_red, 1);
 }
 
 TEST_F(BoutRepoTest, GetNonExistentBoutReturnsNull) {
@@ -34,19 +51,31 @@ TEST_F(BoutRepoTest, GetNonExistentBoutReturnsNull) {
 }
 
 TEST_F(BoutRepoTest, UpdateBout) {
-  Bout bout{0, "Allan", "Le Goodman", 1982};
+  Bout bout = fixture();
   int id = repo_->create(bout);
 
-  Bout update_data{id, "Allan", "LeGoodman", 1982};
+  Bout update_data{id, right_, left_, 1800000000, Sabre, 120,
+                   10, 11, 0, 1, 2, 0};
   repo_->update(update_data);
 
   auto retrieved = repo_->get(id);
   ASSERT_NE(retrieved, nullptr);
-  EXPECT_EQ(retrieved->last_name, "LeGoodman");
+  EXPECT_EQ(retrieved->id, id);
+  EXPECT_EQ(retrieved->left_fencer_id, right_);
+  EXPECT_EQ(retrieved->right_fencer_id, left_);
+  EXPECT_EQ(retrieved->timestamp, update_data.timestamp);
+  EXPECT_EQ(retrieved->weapon, Sabre);
+  EXPECT_EQ(retrieved->time, 120);
+  EXPECT_EQ(retrieved->left_score, 10);
+  EXPECT_EQ(retrieved->right_score, 11);
+  EXPECT_EQ(retrieved->left_yellow, 0);
+  EXPECT_EQ(retrieved->right_yellow, 1);
+  EXPECT_EQ(retrieved->left_red, 2);
+  EXPECT_EQ(retrieved->right_red, 0);
 }
 
 TEST_F(BoutRepoTest, RemoveBout) {
-  Bout bout{0, "Allan", "Goodman", 1992};
+  Bout bout = fixture();
   int id = repo_->create(bout);
 
   auto before_remove = repo_->get(id);
@@ -59,24 +88,24 @@ TEST_F(BoutRepoTest, RemoveBout) {
 }
 
 TEST_F(BoutRepoTest, GetAllWithPaginationAndSearch) {
-  repo_->create(Bout{0, "Alice", "Smith", 2001});
-  repo_->create(Bout{0, "Bob", "Smith", 1998});
-  repo_->create(Bout{0, "Charlie", "Brown", 2005});
-  repo_->create(Bout{0, "David", "Smith", 1995});
+  repo_->create(fixture());
+  repo_->create(fixture());
+  repo_->create(fixture());
+  repo_->create(fixture());
 
   // Test get_all default without search
-  auto page1 = repo_->get_all("", 1, 2);
+  auto page1 = repo_->get_all(1, 2);
   EXPECT_EQ(page1.size(), 2u);
 
-  auto page2 = repo_->get_all("", 2, 2);
+  auto page2 = repo_->get_all(2, 2);
   EXPECT_EQ(page2.size(), 2u);
 
   // Test get_all search filter for "Smith"
-  auto smiths = repo_->get_all("Smith", 1, 10);
-  EXPECT_EQ(smiths.size(), 3u);
+  auto smiths = repo_->get_all(1, 10);
+  EXPECT_EQ(smiths.size(), 4u);
 
   // Test get_all search filter for "Charlie"
-  auto charlie = repo_->get_all("Charlie", 1, 10);
-  ASSERT_EQ(charlie.size(), 1u);
-  EXPECT_EQ(charlie[0].first_name, "Charlie");
+  auto charlie = repo_->get_all(1, 10);
+  ASSERT_EQ(charlie.size(), 4u);
+  EXPECT_EQ(charlie[0].left_fencer_id, left_);
 }

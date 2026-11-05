@@ -47,3 +47,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 enable_testing()
 include(GoogleTest)
 add_subdirectory(tests)
+
+# Use the declared Boost dependency for Crow networking.
+target_compile_definitions(${PROJECT_NAME} PRIVATE CROW_USE_BOOST)

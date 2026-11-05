@@ -104,3 +104,5 @@ B08 (C++17 initialization) also remains open. Do not claim a green baseline unti
 both application and test targets build and the existing suites pass.
 
 Guest support, deletion policy, and all other step 2 API decisions remain open.
+
+- test: repair Bout CRUD fixtures and restore the full build: Replace copied Fencer fields with complete Bout round trips and updates using real FK participants; select Crow Boost networking for both targets. Full build and 25/25 CTest cases pass. Next: ordered pagination and history tests.
