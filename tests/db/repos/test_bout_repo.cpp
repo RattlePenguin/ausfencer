@@ -120,3 +120,29 @@ TEST_F(BoutRepoTest, HistoryMatchesEitherSideOnceAndPaginates) {
   EXPECT_EQ(second[0].id, c);
   EXPECT_TRUE(repo_->get_all_by_fencer(999, 1, 10).empty());
 }
+
+TEST_F(BoutRepoTest, RejectsInvalidPaginationAndHandlesLargeOffsets) {
+  EXPECT_THROW(repo_->get_all(0, 10), std::invalid_argument);
+  EXPECT_THROW(repo_->get_all(1, 101), std::invalid_argument);
+  EXPECT_THROW(repo_->get_all_by_fencer(left_, -1, 10), std::invalid_argument);
+  EXPECT_THROW(repo_->get_all_by_fencer(left_, 1, 0), std::invalid_argument);
+  EXPECT_TRUE(repo_->get_all(2147483647, 100).empty());
+}
+
+TEST_F(BoutRepoTest, ForeignKeysRejectOrphansAndPreserveHistory) {
+  FencerRepo fencers(db_mgr_);
+  for (bool left : {false, true}) {
+    auto bout = fixture();
+    (left ? bout.left_fencer_id : bout.right_fencer_id) = 999;
+    EXPECT_THROW(repo_->create(bout), std::system_error);
+    bout.id = repo_->create(fixture());
+    EXPECT_THROW(repo_->update(bout), std::system_error);
+    auto saved = repo_->get(bout.id);
+    ASSERT_NE(saved, nullptr);
+    EXPECT_EQ(saved->left_fencer_id, left_);
+    EXPECT_EQ(saved->right_fencer_id, right_);
+  }
+  EXPECT_THROW(fencers.remove(left_), std::system_error);
+  EXPECT_THROW(fencers.remove(right_), std::system_error);
+  EXPECT_NE(fencers.get(left_), nullptr);
+}

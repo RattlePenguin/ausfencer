@@ -80,3 +80,10 @@ TEST_F(FencerRepoTest, GetAllWithPaginationAndSearch) {
   ASSERT_EQ(charlie.size(), 1u);
   EXPECT_EQ(charlie[0].first_name, "Charlie");
 }
+
+TEST_F(FencerRepoTest, RejectsInvalidPaginationAndHandlesLargeOffsets) {
+  EXPECT_THROW(repo_->get_all("", 0, 10), std::invalid_argument);
+  EXPECT_THROW(repo_->get_all("a", 1, 101), std::invalid_argument);
+  EXPECT_THROW(repo_->get_all("", 1, 0), std::invalid_argument);
+  EXPECT_TRUE(repo_->get_all("", 2147483647, 100).empty());
+}

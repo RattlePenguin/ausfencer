@@ -4,6 +4,7 @@
 #include "models/Bout.hpp"
 #include "sqlite_orm/sqlite_orm.h"
 #include <memory>
+#include "db/pagination.hpp"
 
 BoutRepo::BoutRepo(std::shared_ptr<DbManager> db_mgr) : BaseRepo(db_mgr) {
   this->name_ = "BoutRepo";
@@ -35,7 +36,7 @@ std::vector<Bout> BoutRepo::get_all(const int page, const int limit) {
   auto lock = db_mgr_->acquire_lock();
 
   // how many entries to skip.
-  int offset{(page - 1) * limit};
+  const auto offset = page_offset(page, limit);
 
   // Get all bouts, limited to limit after skipping offset * limit
   return db_mgr_->get_storage().get_all<Bout>(
@@ -47,7 +48,7 @@ std::vector<Bout> BoutRepo::get_all_by_fencer(const int fencer_id,
   auto lock = db_mgr_->acquire_lock();
 
   // how many entries to skip.
-  int offset{(page - 1) * limit};
+  const auto offset = page_offset(page, limit);
 
   return db_mgr_->get_storage().get_all<Bout>(
       sql::where((sql::c(&Bout::left_fencer_id) == fencer_id) ||

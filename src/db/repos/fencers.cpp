@@ -4,6 +4,7 @@
 #include "models/Fencer.hpp"
 #include "sqlite_orm/sqlite_orm.h"
 #include <memory>
+#include "db/pagination.hpp"
 
 FencerRepo::FencerRepo(std::shared_ptr<DbManager> db_mgr) : BaseRepo(db_mgr) {
   this->name_ = "FencerRepo";
@@ -36,7 +37,7 @@ std::vector<Fencer> FencerRepo::get_all(const std::string &q, const int page,
   auto lock = db_mgr_->acquire_lock();
 
   // how many entries to skip.
-  int offset{(page - 1) * limit};
+  const auto offset = page_offset(page, limit);
 
   if (q.empty()) {
     // Get all fencers, limited to limit after skipping offset * limit

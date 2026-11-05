@@ -108,3 +108,5 @@ Guest support, deletion policy, and all other step 2 API decisions remain open.
 - test: repair Bout CRUD fixtures and restore the full build: Replace copied Fencer fields with complete Bout round trips and updates using real FK participants; select Crow Boost networking for both targets. Full build and 25/25 CTest cases pass. Next: ordered pagination and history tests.
 
 - fix(db): order pages and use numeric participant history predicates: Use ascending IDs for both repositories and numeric equality for either participant. Add empty, distinct-page, right-side, unrelated, duplicate-side and filtered-page checks; full build and 26/26 tests pass. Next: safe repository pagination and FK checks.
+
+- fix(db): bound pagination and verify foreign key enforcement: Compute offsets in int64_t, enforce page >= 1 and limit 1-100 in both repositories. Verify left/right FK failures on create/update and referenced-Fencer deletion without data loss; full build and 29/29 tests pass. Next: record the API contract.
