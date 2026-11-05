@@ -167,3 +167,16 @@ TEST_F(BoutRepoTest, CoordinatedDeleteAndUpdateReportPersistedOutcomes) {
   EXPECT_FALSE(repo_->remove(bout.id));
   EXPECT_EQ(repo_->get(bout.id), nullptr);
 }
+
+TEST_F(BoutRepoTest, SimultaneousDeletesHaveExactlyOneWinner) {
+  const int id = repo_->create(fixture());
+  std::promise<void> start;
+  auto ready = start.get_future().share();
+  auto remove = [&] { ready.wait(); return repo_->remove(id); };
+  auto first = std::async(std::launch::async, remove);
+  auto second = std::async(std::launch::async, remove);
+  start.set_value();
+  const bool a = first.get(), b = second.get();
+  EXPECT_NE(a, b);
+  EXPECT_EQ(repo_->get(id), nullptr);
+}

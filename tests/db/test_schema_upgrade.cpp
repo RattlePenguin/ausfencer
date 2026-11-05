@@ -66,5 +66,11 @@ TEST(SchemaUpgrade, PreservesLegacyBoutsGuestsAndForeignKeysAcrossReopen) {
   EXPECT_FALSE(guest->left_fencer_id);
   EXPECT_FALSE(guest->right_fencer_id);
   EXPECT_EQ(bouts.get_all_by_fencer(1, 1, 10).size(), 1u);
-  EXPECT_TRUE(db->get_storage().select(sql::count<Fencer>())[0] == 2);
+  EXPECT_EQ(db->get_storage().count<Fencer>(), 2);
+  ASSERT_EQ(sqlite3_open(path, &raw), SQLITE_OK);
+  sqlite3_stmt *check = nullptr;
+  ASSERT_EQ(sqlite3_prepare_v2(raw, "PRAGMA foreign_key_check", -1, &check, nullptr), SQLITE_OK);
+  EXPECT_EQ(sqlite3_step(check), SQLITE_DONE); // no orphaned references
+  sqlite3_finalize(check);
+  sqlite3_close(raw);
 }

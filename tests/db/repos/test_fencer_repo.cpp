@@ -3,6 +3,7 @@
 #include "models/Fencer.hpp"
 #include <gtest/gtest.h>
 #include <memory>
+#include <future>
 
 class FencerRepoTest : public ::testing::Test {
 protected:
@@ -95,4 +96,17 @@ TEST_F(FencerRepoTest, MissingMutationsReturnFalse) {
   EXPECT_TRUE(repo_->update({id, "Updated", "Fencer", 2001}));
   EXPECT_TRUE(repo_->remove(id));
   EXPECT_FALSE(repo_->update({id, "Absent", "Fencer", 2000}));
+}
+
+TEST_F(FencerRepoTest, SimultaneousDeletesHaveExactlyOneWinner) {
+  const int id = repo_->create({0, "Saved", "Fencer", 2000});
+  std::promise<void> start;
+  auto ready = start.get_future().share();
+  auto remove = [&] { ready.wait(); return repo_->remove(id); };
+  auto first = std::async(std::launch::async, remove);
+  auto second = std::async(std::launch::async, remove);
+  start.set_value();
+  const bool a = first.get(), b = second.get();
+  EXPECT_NE(a, b);
+  EXPECT_EQ(repo_->get(id), nullptr);
 }
