@@ -112,3 +112,5 @@ Guest support, deletion policy, and all other step 2 API decisions remain open.
 - fix(db): bound pagination and verify foreign key enforcement: Compute offsets in int64_t, enforce page >= 1 and limit 1-100 in both repositories. Verify left/right FK failures on create/update and referenced-Fencer deletion without data loss; full build and 29/29 tests pass. Next: record the API contract.
 
 - docs: settle Bout fields, guest policy and HTTP errors: Select nullable anonymous guests, protected Fencer history, string weapons, explicit timestamps and elapsed time. Specify complete PUT bodies, bounded strict pagination and status codes before handler implementation. Reviewed against repositories; existing full build and 29 tests remain green. Next: nullable persistence and upgrade checks.
+
+- feat(db): allow anonymous guests and preserve legacy bout records: Map participant IDs to optional integers and use preserving schema synchronization. Upgrade an exact legacy table, verify all fields, guest insertion, generated IDs, FK rejection and file-backed reopen; full build and 30/30 tests pass. Next: atomic mutation outcomes.

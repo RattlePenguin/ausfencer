@@ -1,18 +1,19 @@
 #pragma once
 
 #include <ctime>
+#include <optional>
 
 // Values are persisted as SQLite integers; keep this mapping stable.
 enum Weapon { Foil = 0, Epee = 1, Sabre = 2 };
 
 struct Bout {
   int id;
-  int left_fencer_id;
-  int right_fencer_id;
+  std::optional<int> left_fencer_id;
+  std::optional<int> right_fencer_id;
   time_t timestamp;
 
   Weapon weapon;
-  int time; // seconds
+  int time; // elapsed seconds
 
   int left_score; // should be capped at 99
   int right_score;

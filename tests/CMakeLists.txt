@@ -1,6 +1,7 @@
 add_executable(ausfencer_tests
   test_main.cpp
   db/test_db_manager.cpp
+  db/test_schema_upgrade.cpp
   db/test_weapon_persistence.cpp
   db/repos/test_fencer_repo.cpp
   db/repos/test_bout_repo.cpp
