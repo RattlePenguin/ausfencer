@@ -32,3 +32,10 @@ target_link_libraries(ausfencer_tests PRIVATE
 )
 
 gtest_discover_tests(ausfencer_tests)
+
+find_package(Python3 3.7 QUIET COMPONENTS Interpreter)
+if(Python3_FOUND)
+  add_test(NAME ProductionHttpSmoke COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/smoke_test.py $<TARGET_FILE:aus-fencer>)
+  set_tests_properties(ProductionHttpSmoke PROPERTIES RUN_SERIAL TRUE TIMEOUT 30)
+endif()
