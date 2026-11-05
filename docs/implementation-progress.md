@@ -126,3 +126,5 @@ Guest support, deletion policy, and all other step 2 API decisions remain open.
 - feat(http): define complete Bout JSON validation and serialization: Implement all Bout fields, explicit null guests, weapon strings, bounded scores/cards/elapsed time and checked epoch seconds. Strict C++17 conversion probe passes; existing 34/34 tests remain green. Next: replace copied Bout collection handling.
 
 - feat(http): implement ordered Bout collection and participant filtering: Replace copied Fencer search with page/limit and optional fencer_id, serialize complete Bout objects and document guest keys. Full current build and 34/34 tests pass; Bout handler remains outside targets until remaining scaffold methods are repaired. Next: item retrieval and creation.
+
+- feat(http): implement Bout item retrieval and creation: Retrieve actual Bout fields and return complete created objects with generated IDs using the selected validation contract. Full current build and 34/34 tests pass; final copied update method remains unwired. Next: replace mutations and compile the complete handler.

@@ -29,38 +29,15 @@ crow::response BoutHandler::get_all(const crow::request &req) {
 }
 
 crow::response BoutHandler::get(int id) {
-  crow::json::wvalue res;
-  auto bout{this->repo_->get(id)};
-
-  if (!bout) {
-    return this->not_found("Bout not found");
-  }
-
-  res["id"] = bout->id;
-  res["first_name"] = bout->first_name;
-  res["last_name"] = bout->last_name;
-  res["birth_year"] = bout->birth_year;
-  return crow::response(crow::OK, res);
+  auto bout = repo_->get(id);
+  if (!bout) return not_found("Bout not found");
+  return crow::response(crow::OK, bout_json::serialize(*bout));
 }
 
 crow::response BoutHandler::create(const crow::request &req) {
-  crow::json::rvalue json{crow::json::load(req.body)};
-
-  Bout bout{
-      .id = 1,
-      .first_name = json["first_name"].s(),
-      .last_name = json["last_name"].s(),
-      .birth_year = static_cast<int>(json["birth_year"].i()),
-  };
-  int real_id{this->repo_->create(bout)};
-
-  crow::json::wvalue res;
-  res["id"] = real_id;
-  res["first_name"] = bout.first_name;
-  res["last_name"] = bout.last_name;
-  res["birth_year"] = bout.birth_year;
-
-  return crow::response(crow::OK, res);
+  auto bout = bout_json::parse(req.body);
+  bout.id = repo_->create(bout);
+  return crow::response(crow::OK, bout_json::serialize(bout));
 }
 
 crow::response BoutHandler::update(int id, const crow::request &req) {
