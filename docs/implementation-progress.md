@@ -1,6 +1,22 @@
 # Implementation handoff
 
-Updated: 2026-10-09. Active branch: `bout/crud`.
+Updated: 2026-11-05. Active branch: `bout/crud`.
+
+## Current handoff: milestone complete
+
+All five continuation-plan steps are complete. Both Fencer and Bout APIs run in
+production, including participant history, anonymous guests, validated inputs,
+protected history, persistent upgrades and atomic repository mutation outcomes.
+Normal and strict C++17/UBSan builds each pass **48/48** tests, including the
+real-server HTTP/restart smoke. No required milestone implementation remains.
+
+Start with [implementation status](implementation-status.md), the
+[API contract](api-contract.md), and README for current behavior and commands.
+The old checkpoints below are preserved as history, followed by the automated
+2026-11-05 implementation log. Existing local workspace policy edits were
+preserved. Every new commit uses at most 100 added/deleted lines.
+
+## Historical starting point (2026-10-09)
 Starting commit: `c393b68`; working tree was clean.
 The [continuation plan](continuation-plan.md) remains the milestone checklist;
 this file records implementation progress beyond its reviewed baseline.
@@ -8,13 +24,14 @@ this file records implementation progress beyond its reviewed baseline.
 ## Working agreement
 
 - Implement one small, explainable review increment at a time, with its own commit.
-- Stop after each increment for manual review until the user requests automation.
+- The 2026-11-05 request authorizes automated implementation/review/test/commit
+  cycles through completion, with detailed bullet messages and a 100-line budget.
 - Keep Bout CRUD and its prerequisites on `bout/crud`. Use separate branches for
   independent features; do not fold unrelated cleanup into this work.
 - Update this handoff in each implementation commit with the change, evidence,
   outstanding issues, and exact next increment. Check Git status before resuming.
 
-## Latest increment: enable Weapon persistence (V01)
+## Historical increment: enable Weapon persistence (V01)
 
 Added the four sqlite_orm enum traits in `include/db/weapon_mapping.hpp` and
 included them before schema construction. `Bout::weapon` remains a `Weapon`;
@@ -93,7 +110,7 @@ Available prerequisites:
 - These are historical baseline observations; use the latest validation above
   for current implementation status.
 
-## Next review increment
+## Historical next review increment (superseded)
 
 After review, repair B01's copied Bout fixtures/CRUD tests. Use FencerRepo and
 BoutRepo sharing one in-memory DbManager, initialize every Bout field, and cover
@@ -104,6 +121,8 @@ B08 (C++17 initialization) also remains open. Do not claim a green baseline unti
 both application and test targets build and the existing suites pass.
 
 Guest support, deletion policy, and all other step 2 API decisions remain open.
+
+## Automated increments (2026-11-05)
 
 - test: repair Bout CRUD fixtures and restore the full build: Replace copied Fencer fields with complete Bout round trips and updates using real FK participants; select Crow Boost networking for both targets. Full build and 25/25 CTest cases pass. Next: ordered pagination and history tests.
 
@@ -158,3 +177,5 @@ Guest support, deletion policy, and all other step 2 API decisions remain open.
 - docs: record completed milestone and verified finding resolutions: Add authoritative current status with B01-B11/V01-V04 resolution evidence, API/persistence decisions, normal and strict C++17/UBSan 48/48 results, environment versions and remaining product scope. Mark the original project context as historical. No code changed; documentation cross-checked against passing builds/tests. Next: close the checklist and refresh handoff instructions.
 
 - docs: close every continuation-plan milestone checkpoint: Mark all 30 remaining work items complete and link current resolution evidence and selected API decisions. Keep historical findings and later UI/team/tournament scope clearly separated from delivered CRUD. Reviewed every exit condition against the two passing 48-test runs. Next: update the active handoff and AGENTS entry point.
+
+- docs: replace the stale manual checkpoint with the completed handoff: Lead the handoff with completed scope, 48/48 normal and strict validation, authoritative current documents and the authorized automated workflow. Retain dated baseline checkpoints and per-commit evidence as history. Documentation reviewed; no required milestone work remains. Next: refresh AGENTS while preserving pre-existing workspace policy edits.
