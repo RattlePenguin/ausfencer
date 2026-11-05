@@ -119,3 +119,54 @@ TEST_F(BoutHandlerTest, RejectsMissingFieldsBoundsAndInvalidWeapons) {
   }
   EXPECT_TRUE(repo->get_all(1, 10).empty());
 }
+
+TEST_F(BoutHandlerTest, GuestsReplacementsAndHistoryConflicts) {
+  using M = crow::HTTPMethod;
+  ASSERT_EQ(request("/api/bouts", M::POST, payload).code, 200);
+  for (int fencer : {1, 2}) {
+    auto response = request("/api/fencers/" + std::to_string(fencer), M::DELETE);
+    EXPECT_EQ(response.code, 409);
+    EXPECT_EQ(crow::json::load(response.body)["status"].s(), "error");
+  }
+  const std::string updated = R"({"id":999,"left_fencer_id":2,"right_fencer_id":1,
+    "timestamp":1800000000,"weapon":"sabre","time":0,"left_score":99,
+    "right_score":0,"left_yellow":0,"right_yellow":1,"left_red":99,"right_red":0})";
+  auto response = request("/api/bouts/1", M::PUT, updated);
+  ASSERT_EQ(response.code, 200);
+  auto json = crow::json::load(response.body);
+  EXPECT_EQ(json["id"].i(), 1);
+  EXPECT_EQ(json["weapon"].s(), "sabre");
+  auto saved = repo->get(1);
+  ASSERT_NE(saved, nullptr);
+  EXPECT_EQ(saved->left_fencer_id, 2);
+  EXPECT_EQ(saved->right_fencer_id, 1);
+  EXPECT_EQ(saved->timestamp, 1800000000);
+  EXPECT_EQ(saved->weapon, Sabre);
+  EXPECT_EQ(saved->time, 0);
+  EXPECT_EQ(saved->left_score, 99);
+  EXPECT_EQ(saved->right_score, 0);
+  EXPECT_EQ(saved->left_yellow, 0);
+  EXPECT_EQ(saved->right_yellow, 1);
+  EXPECT_EQ(saved->left_red, 99);
+  EXPECT_EQ(saved->right_red, 0);
+  for (const auto &key : {"left_fencer_id", "right_fencer_id"}) {
+    crow::json::wvalue bad(crow::json::load(updated));
+    bad[key] = 999;
+    EXPECT_EQ(request("/api/bouts", M::POST, bad.dump()).code, 409);
+    EXPECT_EQ(request("/api/bouts/1", M::PUT, bad.dump()).code, 409);
+  }
+  EXPECT_EQ(repo->get_all(1, 10).size(), 1u);
+  EXPECT_EQ(repo->get(1)->left_score, 99);
+  crow::json::wvalue guest(crow::json::load(payload));
+  guest["left_fencer_id"] = nullptr;
+  guest["weapon"] = "epee";
+  ASSERT_EQ(request("/api/bouts/1", M::PUT, guest.dump()).code, 200);
+  EXPECT_EQ(request("/api/fencers/1", M::DELETE).code, 200);
+  guest["right_fencer_id"] = nullptr;
+  ASSERT_EQ(request("/api/bouts", M::POST, guest.dump()).code, 200);
+  auto get = request("/api/bouts/2", M::GET);
+  auto anonymous = crow::json::load(get.body);
+  EXPECT_EQ(anonymous["left_fencer_id"].t(), crow::json::type::Null);
+  EXPECT_EQ(anonymous["right_fencer_id"].t(), crow::json::type::Null);
+  EXPECT_EQ(anonymous["weapon"].s(), "epee");
+}
