@@ -9,8 +9,8 @@ class BoutHandler : public BaseHandler {
   std::shared_ptr<BoutRepo> repo_;
 
   // Returns all bouts, capped by pagination and limits
-  // req url params: q, page, limit
-  // q: search pattern on bout first/last name
+  // req url params: fencer_id, page, limit
+  // fencer_id optionally matches either participant
   // page: number to offset by based on limit
   // limit: max number of rows/entries returned at once
   crow::response get_all(const crow::request &req);
@@ -20,7 +20,7 @@ class BoutHandler : public BaseHandler {
 
   // Creates the bout with the given id
   // Returns the id of the bout
-  // TODO should the bout be created if fencer ids are not provided?
+  // Both participant keys are required; null denotes an anonymous guest.
   crow::response create(const crow::request &req);
 
   // Updates the bout with the given id

@@ -1,5 +1,6 @@
 #include "handlers/bouts.hpp"
 #include "models/Bout.hpp"
+#include "handlers/bout_json.hpp"
 #include <crow/common.h>
 #include <crow/http_request.h>
 #include <crow/http_response.h>
@@ -14,43 +15,16 @@ BoutHandler::BoutHandler(const std::string &basePath,
 };
 
 crow::response BoutHandler::get_all(const crow::request &req) {
-  auto q_param = req.url_params.get("q") ? req.url_params.get("q") : "";
-  std::string q(q_param);
-
-  // Indicates page of bouts
-  int page{1};
-  auto page_param =
-      req.url_params.get("page") ? req.url_params.get("page") : "1";
-
-  try {
-    page = std::max(1, std::stoi(page_param));
-  } catch (const std::exception &e) {
-    std::cerr << e.what() << '\n';
-  }
-
-  // Indicates limit of how many entries on one page
-  int limit{10};
-  auto limit_param =
-      req.url_params.get("limit") ? req.url_params.get("limit") : "10";
-
-  try {
-    limit = std::max(1, std::stoi(limit_param));
-  } catch (const std::exception &e) {
-    std::cerr << e.what() << '\n';
-  }
-
+  const int page = input::query(req, "page", 1);
+  const int limit = input::query(req, "limit", 10);
+  page_offset(page, limit);
+  const int fencer = input::query(req, "fencer_id", 0);
+  auto rows = fencer ? repo_->get_all_by_fencer(fencer, page, limit)
+                     : repo_->get_all(page, limit);
   crow::json::wvalue res;
   crow::json::wvalue::list bouts;
-  for (const auto &bout : this->repo_->get_all(q, page, limit)) {
-    crow::json::wvalue bout_json;
-    bout_json["id"] = bout.id;
-    bout_json["first_name"] = bout.first_name;
-    bout_json["last_name"] = bout.last_name;
-    bout_json["birth_year"] = bout.birth_year;
-    bouts.push_back(std::move(bout_json));
-  }
+  for (const auto &bout : rows) bouts.push_back(bout_json::serialize(bout));
   res["bouts"] = std::move(bouts);
-
   return crow::response(crow::OK, res);
 }
 

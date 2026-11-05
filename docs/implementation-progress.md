@@ -124,3 +124,5 @@ Guest support, deletion policy, and all other step 2 API decisions remain open.
 - fix(http): validate Fencer replacement bodies and pagination: Use strict bounded queries, C++17 aggregate initialization and atomic repository outcomes for PUT/DELETE. Populate real Crow query parameters in regression tests; verify search, invalid queries, unchanged rejected writes and missing mutations. Full build and 34/34 tests pass. Next: Bout JSON conversion.
 
 - feat(http): define complete Bout JSON validation and serialization: Implement all Bout fields, explicit null guests, weapon strings, bounded scores/cards/elapsed time and checked epoch seconds. Strict C++17 conversion probe passes; existing 34/34 tests remain green. Next: replace copied Bout collection handling.
+
+- feat(http): implement ordered Bout collection and participant filtering: Replace copied Fencer search with page/limit and optional fencer_id, serialize complete Bout objects and document guest keys. Full current build and 34/34 tests pass; Bout handler remains outside targets until remaining scaffold methods are repaired. Next: item retrieval and creation.
