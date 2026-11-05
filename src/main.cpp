@@ -2,7 +2,7 @@
 
 #include "server.hpp"
 
-int main(int argc, char *argv[]) {
+int main() {
 
   try {
     ServerConfig config{};
@@ -10,6 +10,7 @@ int main(int argc, char *argv[]) {
     Server server(config);
     server.start();
   } catch (const std::exception &e) {
-    std::cout << e.what() << '\n';
+    std::cerr << e.what() << '\n';
+    return 1;
   }
 }

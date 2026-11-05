@@ -1,5 +1,7 @@
 add_executable(ausfencer_tests
   test_main.cpp
+  test_server.cpp
+  ${CMAKE_SOURCE_DIR}/src/server.cpp
   db/test_db_manager.cpp
   db/test_schema_upgrade.cpp
   db/test_weapon_persistence.cpp

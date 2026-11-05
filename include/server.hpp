@@ -12,6 +12,7 @@
 struct ServerConfig {
   uint16_t port{8080};
   uint16_t threads{2};
+  std::string database_path{"db.ausfencer"};
 };
 
 using App = crow::App<crow::CORSHandler, LoggerMiddleware>;
@@ -22,7 +23,7 @@ class Server {
   std::shared_ptr<DbManager> db_mgr_;
   std::vector<std::shared_ptr<IHandler>> handlers_;
 
-  bool is_running_{false};
+  bool setup_complete_{false};
 
 public:
   explicit Server(const ServerConfig &config = ServerConfig());
