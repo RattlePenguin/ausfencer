@@ -34,3 +34,12 @@ TEST(ServerLifecycle, SetupAndConstructionDoNotSeedPersistentData) {
   EXPECT_EQ(db.get_storage().count<Fencer>(), 0);
   EXPECT_EQ(db.get_storage().count<Bout>(), 0);
 }
+
+TEST(CrowCompatibility, DefaultRequestInitializesConnectionState) {
+  crow::request request;
+  EXPECT_EQ(request.http_ver_major, 0);
+  EXPECT_EQ(request.http_ver_minor, 0);
+  EXPECT_FALSE(request.keep_alive);
+  EXPECT_FALSE(request.close_connection);
+  EXPECT_FALSE(request.upgrade);
+}
