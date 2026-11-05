@@ -10,6 +10,12 @@
 #include <string>
 
 namespace input {
+inline int route_id(std::int64_t id) {
+  if (id < 1 || id > std::numeric_limits<int>::max())
+    throw std::invalid_argument("ID must be a positive signed int");
+  return static_cast<int>(id);
+}
+
 inline crow::json::rvalue object(const std::string &body) {
   auto json = crow::json::load(body);
   if (!json || json.t() != crow::json::type::Object)

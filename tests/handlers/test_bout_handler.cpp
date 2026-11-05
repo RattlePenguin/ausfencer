@@ -219,3 +219,12 @@ TEST_F(BoutHandlerTest, TimestampOverflowAndUnexpectedDatabaseErrors) {
     EXPECT_EQ(response.body.find("no such table"), std::string::npos);
   }
 }
+
+TEST_F(BoutHandlerTest, LargeRouteIdsCannotWrapToStoredIds) {
+  using M = crow::HTTPMethod;
+  ASSERT_EQ(request("/api/bouts", M::POST, payload).code, 200);
+  for (auto method : {M::GET, M::PUT, M::DELETE})
+    for (const std::string id : {"0", "4294967297", "2147483648"})
+      EXPECT_EQ(request("/api/bouts/" + id, method, payload).code, 400);
+  EXPECT_NE(repo->get(1), nullptr);
+}

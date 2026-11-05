@@ -161,3 +161,12 @@ TEST_F(FencerHandlerTest, QueryValidationAndRejectedReplacement) {
   EXPECT_EQ(handle_request("/api/fencers/999", crow::HTTPMethod::PUT, body).code, 404);
   EXPECT_EQ(handle_request("/api/fencers/999", crow::HTTPMethod::DELETE).code, 404);
 }
+
+TEST_F(FencerHandlerTest, LargeRouteIdsCannotWrapToStoredIds) {
+  repo_->create({0, "Saved", "Fencer", 2000});
+  const std::string body = R"({"first_name":"A","last_name":"B","birth_year":2000})";
+  for (auto method : {crow::HTTPMethod::GET, crow::HTTPMethod::PUT, crow::HTTPMethod::DELETE})
+    for (const std::string id : {"0", "4294967297", "2147483648"})
+      EXPECT_EQ(handle_request("/api/fencers/" + id, method, body).code, 400);
+  EXPECT_EQ(repo_->get(1)->first_name, "Saved");
+}
