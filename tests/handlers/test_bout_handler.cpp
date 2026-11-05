@@ -65,3 +65,57 @@ TEST_F(BoutHandlerTest, CrudReturnsCompletePersistedObjects) {
   EXPECT_EQ(request(url, M::PUT, payload).code, 404);
   EXPECT_EQ(request(url, M::DELETE).code, 404);
 }
+
+TEST_F(BoutHandlerTest, RejectsBadBodiesWithoutChangingSavedBout) {
+  using M = crow::HTTPMethod;
+  ASSERT_EQ(request("/api/bouts", M::POST, payload).code, 200);
+  for (const std::string body : {"{", "null", "[]", "{}", "false"}) {
+    EXPECT_EQ(request("/api/bouts", M::POST, body).code, 400);
+    EXPECT_EQ(request("/api/bouts/1", M::PUT, body).code, 400);
+  }
+  for (const auto &key : {"left_fencer_id", "right_fencer_id", "timestamp", "weapon",
+       "time", "left_score", "right_score", "left_yellow", "right_yellow",
+       "left_red", "right_red"}) {
+    for (const std::string invalid : {"true", "[]", "{}", "1.5", "\"1\""}) {
+      crow::json::wvalue body(crow::json::load(payload));
+      body[key] = crow::json::wvalue(crow::json::load(invalid));
+      EXPECT_EQ(request("/api/bouts", M::POST, body.dump()).code, 400) << key << invalid;
+      EXPECT_EQ(request("/api/bouts/1", M::PUT, body.dump()).code, 400) << key << invalid;
+    }
+  }
+  EXPECT_EQ(repo->get_all(1, 100).size(), 1u);
+  EXPECT_EQ(repo->get(1)->left_score, 15);
+}
+
+TEST_F(BoutHandlerTest, RejectsMissingFieldsBoundsAndInvalidWeapons) {
+  using M = crow::HTTPMethod;
+  for (const std::string key : {"left_fencer_id", "right_fencer_id", "timestamp",
+       "weapon", "time", "left_score", "right_score", "left_yellow",
+       "right_yellow", "left_red", "right_red"}) {
+    crow::json::wvalue body(crow::json::load(payload));
+    body[key] = nullptr;
+    if (key.find("fencer_id") == std::string::npos)
+      EXPECT_EQ(request("/api/bouts", M::POST, body.dump()).code, 400) << key;
+    auto obj = crow::json::load(payload);
+    crow::json::wvalue missing;
+    for (const auto &field : obj.keys())
+      if (field != key) missing[field] = crow::json::wvalue(obj[field]);
+    EXPECT_EQ(request("/api/bouts", M::POST, missing.dump()).code, 400) << key;
+  }
+  for (const auto &[key, maximum] : std::vector<std::pair<std::string, int>>{
+       {"left_fencer_id", INT_MAX}, {"right_fencer_id", INT_MAX}, {"time", 86400},
+       {"left_score", 99}, {"right_score", 99}, {"left_yellow", 1},
+       {"right_yellow", 1}, {"left_red", 99}, {"right_red", 99}}) {
+    for (std::int64_t value : {-1LL, static_cast<long long>(maximum) + 1}) {
+      crow::json::wvalue body(crow::json::load(payload));
+      body[key] = value;
+      EXPECT_EQ(request("/api/bouts", M::POST, body.dump()).code, 400) << key << value;
+    }
+  }
+  for (const std::string weapon : {"FOIL", "", "sword"}) {
+    crow::json::wvalue body(crow::json::load(payload));
+    body["weapon"] = weapon;
+    EXPECT_EQ(request("/api/bouts", M::POST, body.dump()).code, 400);
+  }
+  EXPECT_TRUE(repo->get_all(1, 10).empty());
+}
