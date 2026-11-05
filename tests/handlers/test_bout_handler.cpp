@@ -170,3 +170,52 @@ TEST_F(BoutHandlerTest, GuestsReplacementsAndHistoryConflicts) {
   EXPECT_EQ(anonymous["right_fencer_id"].t(), crow::json::type::Null);
   EXPECT_EQ(anonymous["weapon"].s(), "epee");
 }
+
+TEST_F(BoutHandlerTest, CollectionFiltersEitherSideOnceAndPaginates) {
+  using M = crow::HTTPMethod;
+  ASSERT_EQ(request("/api/bouts", M::POST, payload).code, 200);
+  crow::json::wvalue next(crow::json::load(payload));
+  next["left_fencer_id"] = 2;
+  next["right_fencer_id"] = 1;
+  ASSERT_EQ(request("/api/bouts", M::POST, next.dump()).code, 200);
+  next["left_fencer_id"] = 1;
+  ASSERT_EQ(request("/api/bouts", M::POST, next.dump()).code, 200);
+  next["left_fencer_id"] = 2;
+  next["right_fencer_id"] = 2;
+  ASSERT_EQ(request("/api/bouts", M::POST, next.dump()).code, 200);
+  for (int page : {1, 2, 3}) {
+    auto response = request("/api/bouts?fencer_id=1&limit=1&page=" +
+                            std::to_string(page), M::GET);
+    ASSERT_EQ(response.code, 200);
+    auto json = crow::json::load(response.body);
+    ASSERT_EQ(json["bouts"].size(), 1u);
+    EXPECT_EQ(json["bouts"][0]["id"].i(), page);
+    EXPECT_EQ(json["bouts"][0]["weapon"].s(), "foil");
+  }
+  auto empty = request("/api/bouts?fencer_id=999", M::GET);
+  EXPECT_EQ(crow::json::load(empty.body)["bouts"].size(), 0u);
+  for (const std::string query : {"page=0", "limit=101", "page=1x", "limit=-1",
+       "fencer_id=0", "fencer_id=-1", "fencer_id=2x", "fencer_id=",
+       "page=2147483648", "limit=0", "page=+1", "limit=1.0"})
+    EXPECT_EQ(request("/api/bouts?" + query, M::GET).code, 400) << query;
+  EXPECT_EQ(request("/api/bouts?page=2147483647&limit=100", M::GET).code, 200);
+}
+
+TEST_F(BoutHandlerTest, TimestampOverflowAndUnexpectedDatabaseErrors) {
+  using M = crow::HTTPMethod;
+  for (const std::string value : {"-1", "9223372036854775808", "184467440737095516160"}) {
+    std::string body = payload;
+    body.replace(body.find("1700000000"), 10, value);
+    EXPECT_EQ(request("/api/bouts", M::POST, body).code, 400) << value;
+  }
+  db->get_storage().drop_table("bouts");
+  for (const auto &[url, method] : std::vector<std::pair<std::string, M>>{
+       {"/api/bouts", M::GET}, {"/api/bouts/1", M::GET}, {"/api/bouts", M::POST}}) {
+    auto response = request(url, method, payload);
+    EXPECT_EQ(response.code, 500);
+    auto json = crow::json::load(response.body);
+    ASSERT_TRUE(json);
+    EXPECT_EQ(json["status"].s(), "error");
+    EXPECT_EQ(response.body.find("no such table"), std::string::npos);
+  }
+}
