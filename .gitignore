@@ -1,2 +1,6 @@
 build/
 .cache/
+
+# SQLite runtime data and sidecars
+*.ausfencer
+*.ausfencer-*
