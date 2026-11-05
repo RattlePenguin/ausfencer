@@ -116,3 +116,5 @@ Guest support, deletion policy, and all other step 2 API decisions remain open.
 - feat(db): allow anonymous guests and preserve legacy bout records: Map participant IDs to optional integers and use preserving schema synchronization. Upgrade an exact legacy table, verify all fields, guest insertion, generated IDs, FK rejection and file-backed reopen; full build and 30/30 tests pass. Next: atomic mutation outcomes.
 
 - fix(db): report mutation existence under the shared database lock: Return bool from updates/deletions after checking existence while holding the same manager lock. Add coordinated asynchronous delete-before-update coverage and Fencer missing/success outcomes; full build and 32/32 tests pass. Next: shared HTTP validation.
+
+- feat(http): add strict JSON field and query parsers: Add object, required-field, bounded integer, name and complete decimal-query validation. Use the helpers for Fencer creation with standard C++17 initialization; full build and 32/32 tests pass. Next: consistent route exception translation and invalid-input tests.

@@ -1,5 +1,6 @@
 #include "handlers/fencers.hpp"
 #include "models/Fencer.hpp"
+#include "handlers/input.hpp"
 #include <crow/common.h>
 #include <crow/http_request.h>
 #include <crow/http_response.h>
@@ -70,14 +71,9 @@ crow::response FencerHandler::get(int id) {
 }
 
 crow::response FencerHandler::create(const crow::request &req) {
-  crow::json::rvalue json{crow::json::load(req.body)};
-
-  Fencer fencer{
-      .id = 1,
-      .first_name = json["first_name"].s(),
-      .last_name = json["last_name"].s(),
-      .birth_year = static_cast<int>(json["birth_year"].i()),
-  };
+  auto json = input::object(req.body);
+  Fencer fencer{0, input::name(json, "first_name"), input::name(json, "last_name"),
+                static_cast<int>(input::integer(json, "birth_year", 1, 9999))};
   int real_id{this->repo_->create(fencer)};
 
   crow::json::wvalue res;
