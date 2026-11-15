@@ -6,6 +6,21 @@ read the [API contract](docs/api-contract.md) and
 as of 2026-11-05. [Project context](docs/project-context.md) preserves the historical
 review at `54e1ffe`; check current code and Git status before making changes.
 
+## Workspace permissions and execution
+
+- All Codex agents, including subagents, follow `.codex/config.toml`. Writes are
+  authorized within `/home/duckye/Projects/ausfencer`, `/tmp`, and the system
+  temporary directory. Paths outside those locations are read-only.
+- Perform authorized work within those boundaries without requesting approval.
+  Local Git commits are allowed, including writes to this repository's `.git`.
+  Run builds, tests, the backend server, and SQLite as needed; keep databases,
+  journals, caches, and other generated files within the writable locations.
+- Do not bypass the sandbox or request broader filesystem access. If an action
+  is denied, treat it as blocked and incomplete. Report the denial and its
+  effect on the task; never assume the action ran or claim it succeeded.
+- These are project defaults for new sessions. Host or administrator policies
+  and explicit session overrides take precedence; report any resulting limits.
+
 ## Project in one minute
 
 - A C++17 HTTP backend storing Fencers and completed bouts; no frontend or auth.
