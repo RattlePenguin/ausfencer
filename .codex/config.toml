@@ -1,18 +1,23 @@
-# Automatically run local commands within the filesystem permissions below.
+# Workspace defaults for Codex and its subagents. Requires permission-profile support.
+# Keep sandbox_mode and sandbox_workspace_write unset: they override this profile.
 approval_policy = "never"
-default_permissions = "ausfencer-workspace"
+default_permissions = "ausfencer"
 
-# Use a custom profile so Git metadata is writable without unsandboxed rules.
-# The absolute path deliberately excludes the parent directory and /tmp.
-[permissions.ausfencer-workspace.filesystem]
+[permissions.ausfencer]
+description = "Write within AusFencer and temporary directories; read elsewhere; no escalation prompts."
+
+[permissions.ausfencer.filesystem]
 ":root" = "read"
+"/home/duckye/Projects/ausfencer" = "write"
+# Codex protects these subdirectories separately, even under a writable root.
+"/home/duckye/Projects/ausfencer/.git" = "write"
+"/home/duckye/Projects/ausfencer/.codex" = "write"
+"/home/duckye/Projects/ausfencer/.agents" = "write"
+"/home/duckye/Projects/ausfencer/.aws" = "write"
+":slash_tmp" = "write"
+":tmpdir" = "write"
 
-[permissions.ausfencer-workspace.filesystem."/home/duckye/Projects/ausfencer"]
-"." = "write"
-".git" = "write"
-".codex" = "write"
-".agents" = "write"
-".aws" = "write"
-
-[permissions.ausfencer-workspace.network]
-enabled = false
+# Direct network access permits the backend server and local HTTP smoke checks.
+# Filesystem restrictions still apply to server processes and SQLite databases.
+[permissions.ausfencer.network]
+enabled = true

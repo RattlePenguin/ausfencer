@@ -97,7 +97,7 @@ TEST_F(DbManagerTest, UpgradesAnExistingLegacyDatabaseWithoutLosingRecords) {
   {
     DbManager db(path);
     EXPECT_EQ(db.get_storage().get<Fencer>(7).first_name,"Legacy");
-    EXPECT_EQ(db.query("PRAGMA user_version")[0].at("user_version"),"5");
+    EXPECT_EQ(db.query("PRAGMA user_version")[0].at("user_version"),"6");
     EXPECT_EQ(db.get_storage().insert(Fencer{0,"Next","Demo",2001}),8);
   }
   EXPECT_TRUE(std::filesystem::remove(path));

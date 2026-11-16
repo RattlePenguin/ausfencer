@@ -1,5 +1,6 @@
 #include "server.hpp"
 #include "handlers/fencers.hpp"
+#include "handlers/bouts.hpp"
 #include "handlers/tracker.hpp"
 #include "handlers/workflows.hpp"
 #include "handlers/interface.hpp"
@@ -10,6 +11,8 @@
 #include <fstream>
 
 Server::Server(const ServerConfig &config) : config_{config} {
+  if (config_.threads < 2)
+    throw std::invalid_argument("Server threads must be at least 2");
   // Gives logs for given class and above
   // defaulting to Info
   crow::logger::setLogLevel(crow::LogLevel::Info);
@@ -29,6 +32,7 @@ Server::Server(const ServerConfig &config) : config_{config} {
 }
 
 void Server::setup() {
+  if (setup_complete_) return;
   for (const auto &asset : std::vector<std::pair<std::string,std::string>>{
        {"/","index.html"},{"/styles.css","styles.css"},{"/app.js","app.js"},{"/ui.js","ui.js"},
        {"/profiles.js","profiles.js"},{"/events.js","events.js"},
@@ -50,6 +54,10 @@ void Server::setup() {
   const char *token = std::getenv("AUSFENCER_ADMIN_TOKEN");
   this->add_handler(std::make_shared<FencerHandler>(
       "/api/fencers", std::make_shared<FencerRepo>(this->db_mgr_), token ? token : ""));
+  add_handler(std::make_shared<BoutHandler>(
+      "/api/practice-bouts", std::make_shared<BoutRepo>(db_mgr_), token ? token : ""));
+  app_->validate();
+  setup_complete_ = true;
 }
 
 void Server::start() {

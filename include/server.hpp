@@ -24,7 +24,7 @@ class Server {
   std::shared_ptr<DbManager> db_mgr_;
   std::vector<std::shared_ptr<IHandler>> handlers_;
 
-  bool is_running_{false};
+  bool setup_complete_{false};
 
 public:
   explicit Server(const ServerConfig &config = ServerConfig());

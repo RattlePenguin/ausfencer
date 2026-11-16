@@ -90,3 +90,7 @@ Legacy `/api/fencers` CRUD remains available. Writes need the separate
 tracker profiles or competition entries. The fixture adapter currently supplies
 those records. Community competition creation and participant confirmation are
 unfinished; merge/split and broader identity administration are future work.
+
+Operator-only practice CRUD is available separately at `/api/practice-bouts`;
+see the [practice API contract](api-contract.md). Practice records never appear
+in competition histories, statistics, or event placings.

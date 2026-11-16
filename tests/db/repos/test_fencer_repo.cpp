@@ -3,6 +3,7 @@
 #include "models/Fencer.hpp"
 #include <gtest/gtest.h>
 #include <memory>
+#include <future>
 
 class FencerRepoTest : public ::testing::Test {
 protected:
@@ -79,4 +80,33 @@ TEST_F(FencerRepoTest, GetAllWithPaginationAndSearch) {
   auto charlie = repo_->get_all("Charlie", 1, 10);
   ASSERT_EQ(charlie.size(), 1u);
   EXPECT_EQ(charlie[0].first_name, "Charlie");
+}
+
+TEST_F(FencerRepoTest, RejectsInvalidPaginationAndHandlesLargeOffsets) {
+  EXPECT_THROW(repo_->get_all("", 0, 10), std::invalid_argument);
+  EXPECT_THROW(repo_->get_all("a", 1, 101), std::invalid_argument);
+  EXPECT_THROW(repo_->get_all("", 1, 0), std::invalid_argument);
+  EXPECT_THROW(repo_->get_all("", 2147483647, 100), std::invalid_argument);
+}
+
+TEST_F(FencerRepoTest, MissingMutationsReturnFalse) {
+  EXPECT_FALSE(repo_->update({999, "Absent", "Fencer", 2000}));
+  EXPECT_FALSE(repo_->remove(999));
+  int id = repo_->create({0, "Present", "Fencer", 2000});
+  EXPECT_TRUE(repo_->update({id, "Updated", "Fencer", 2001}));
+  EXPECT_TRUE(repo_->remove(id));
+  EXPECT_FALSE(repo_->update({id, "Absent", "Fencer", 2000}));
+}
+
+TEST_F(FencerRepoTest, SimultaneousDeletesHaveExactlyOneWinner) {
+  const int id = repo_->create({0, "Saved", "Fencer", 2000});
+  std::promise<void> start;
+  auto ready = start.get_future().share();
+  auto remove = [&] { ready.wait(); return repo_->remove(id); };
+  auto first = std::async(std::launch::async, remove);
+  auto second = std::async(std::launch::async, remove);
+  start.set_value();
+  const bool a = first.get(), b = second.get();
+  EXPECT_NE(a, b);
+  EXPECT_EQ(repo_->get(id), nullptr);
 }
