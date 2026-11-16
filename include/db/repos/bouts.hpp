@@ -1,0 +1,36 @@
+#pragma once
+
+#include "base.hpp"
+#include "db/db_manager.hpp"
+#include "models/Bout.hpp"
+#include <memory>
+#include <vector>
+
+class BoutRepo : public BaseRepo {
+public:
+  explicit BoutRepo(std::shared_ptr<DbManager> db_mgr);
+
+  // Creates a new data entry with the given Bout, returns its primary id
+  // Primary id is autoincremented with each entry
+  int create(const Bout &bout);
+
+  // Getter for Bout with id
+  std::unique_ptr<Bout> get(int id);
+
+  // Returns false if missing; existence and mutation share the database lock.
+  // Updates Bout, id is taken from the Bout object itself
+  bool update(const Bout &bout);
+
+  // Removes Bout with given id
+  bool remove(int id);
+
+  // Returns a list of all bouts
+  // Accepts page and limit for limiting results
+  std::vector<Bout> get_all(const int page, const int limit);
+
+  // get_all but with fencer id param
+  // Returns a list of all bouts involving a given fencer
+  // Accepts page and limit for limiting results
+  std::vector<Bout> get_all_by_fencer(const int fencer_id, const int page,
+                                      const int limit);
+};

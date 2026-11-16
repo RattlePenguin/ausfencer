@@ -1,6 +1,7 @@
 #include "handlers/fencers.hpp"
 #include "models/Fencer.hpp"
 #include "handlers/action_body.hpp"
+#include "handlers/input.hpp"
 #include "services/names.hpp"
 #include <crow/common.h>
 #include <crow/http_request.h>
@@ -39,27 +40,9 @@ crow::response FencerHandler::get_all(const crow::request &req) {
   auto q_param = req.url_params.get("q") ? req.url_params.get("q") : "";
   std::string q(q_param);
 
-  // Indicates page of fencers
-  int page{1};
-  auto page_param =
-      req.url_params.get("page") ? req.url_params.get("page") : "1";
-
-  try {
-    page = std::clamp(std::stoi(page_param),1,1000000);
-  } catch (const std::exception &e) {
-    std::cerr << e.what() << '\n';
-  }
-
-  // Indicates limit of how many entries on one page
-  int limit{10};
-  auto limit_param =
-      req.url_params.get("limit") ? req.url_params.get("limit") : "10";
-
-  try {
-    limit = std::clamp(std::stoi(limit_param),1,100);
-  } catch (const std::exception &e) {
-    std::cerr << e.what() << '\n';
-  }
+  const int page = input::query(req, "page", 1);
+  const int limit = input::query(req, "limit", 10);
+  page_offset(page, limit);
 
   crow::json::wvalue res;
   crow::json::wvalue::list fencers;
@@ -103,15 +86,8 @@ crow::response FencerHandler::create(const crow::request &req) {
 }
 
 crow::response FencerHandler::update(int id, const crow::request &req) {
-  auto old_fencer{this->repo_->get(id)};
-
-  if (!old_fencer) {
-    return this->not_found("Fencer not found");
-  }
-
-  auto updated_fencer = read_fencer(req,old_fencer->id);
-
-  this->repo_->update(updated_fencer);
+  auto updated_fencer = read_fencer(req, id);
+  if (!repo_->update(updated_fencer)) return not_found("Fencer not found");
 
   crow::json::wvalue res;
   res["id"] = updated_fencer.id;
@@ -122,13 +98,7 @@ crow::response FencerHandler::update(int id, const crow::request &req) {
 }
 
 crow::response FencerHandler::remove(int id) {
-  auto old_fencer{this->repo_->get(id)};
-
-  if (!old_fencer) {
-    return this->not_found("Fencer not found");
-  }
-
-  this->repo_->remove(id);
+  if (!repo_->remove(id)) return not_found("Fencer not found");
 
   crow::json::wvalue res;
   res["success"] = true;
@@ -138,31 +108,29 @@ crow::response FencerHandler::remove(int id) {
 void FencerHandler::register_routes(App &app) {
   app.route_dynamic(this->basePath_)
       .methods(crow::HTTPMethod::GET)(
-          [this](const crow::request &req) { return this->get_all(req); });
+          [this](const crow::request &req) { return checked([&] { return this->get_all(req); }); });
 
   app.route_dynamic(this->basePath_ + "/<int>")
       .methods(crow::HTTPMethod::GET)(
-          [this](const crow::request &req, int id) { return this->get(id); });
+          [this](const crow::request &req, std::int64_t id) { return checked([&] { return this->get(input::route_id(id)); }); });
 
   app.route_dynamic(this->basePath_)
       .methods(crow::HTTPMethod::POST)(
           [this](const crow::request &req) {
             if (!can_write(req)) return crow::response(403);
-            try { return this->create(req); }
-            catch (const std::invalid_argument &e) { return bad_request(e.what()); }
+            return checked([&] { return this->create(req); });
           });
 
   app.route_dynamic(this->basePath_ + "/<int>")
-      .methods(crow::HTTPMethod::PUT)([this](const crow::request &req, int id) {
+      .methods(crow::HTTPMethod::PUT)([this](const crow::request &req, std::int64_t id) {
         if (!can_write(req)) return crow::response(403);
-        try { return this->update(id, req); }
-        catch (const std::invalid_argument &e) { return bad_request(e.what()); }
+        return checked([&] { return this->update(input::route_id(id), req); });
       });
 
   app.route_dynamic(this->basePath_ + "/<int>")
       .methods(crow::HTTPMethod::DELETE)(
-          [this](const crow::request &req, int id) {
+          [this](const crow::request &req, std::int64_t id) {
             if (!can_write(req)) return crow::response(403);
-            return this->remove(id);
+            return checked([&] { return this->remove(input::route_id(id)); });
           });
 }

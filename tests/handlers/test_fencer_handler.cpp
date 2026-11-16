@@ -25,7 +25,9 @@ protected:
   crow::response handle_request(const std::string &url, crow::HTTPMethod method,
                                 const std::string &body = "") {
     crow::request req;
-    req.url = url;
+    req.raw_url = url;
+    req.url = url.substr(0, url.find('?'));
+    req.url_params = crow::query_string(url);
     req.method = method;
     req.body = body;
     req.add_header("Authorization", "Bearer test-admin");
@@ -143,4 +145,50 @@ TEST_F(FencerHandlerTest, DeleteFencerSuccess) {
   auto get_res = handle_request("/api/fencers/" + std::to_string(id),
                                 crow::HTTPMethod::GET);
   EXPECT_EQ(get_res.code, 404);
+}
+
+TEST_F(FencerHandlerTest, InvalidCreateIsJson400AndDoesNotWrite) {
+  for (const std::string body : {"{", "null", "[]", "{}",
+       R"({"first_name":3,"last_name":"B","birth_year":2000})",
+       R"({"first_name":"A","last_name":"B","birth_year":1.5})",
+       R"({"first_name":"A","last_name":"B","birth_year":184467440737095516160})",
+       R"({"first_name":"A","last_name":"B","birth_year":true})",
+       R"({"first_name":" ","last_name":" ","birth_year":2000})"}) {
+    auto response = handle_request("/api/fencers", crow::HTTPMethod::POST, body);
+    EXPECT_EQ(response.code, 400) << body;
+    auto json = crow::json::load(response.body);
+    ASSERT_TRUE(json);
+    EXPECT_EQ(json["status"].s(), "error");
+    EXPECT_FALSE(std::string(json["message"].s()).empty());
+  }
+  EXPECT_TRUE(repo_->get_all("", 1, 10).empty());
+}
+
+TEST_F(FencerHandlerTest, QueryValidationAndRejectedReplacement) {
+  const int id = repo_->create({0, "Alice", "Smith", 2000});
+  repo_->create({0, "Bob", "Jones", 2001});
+  for (const std::string query : {"page=0", "page=2junk", "page=", "page=-1",
+       "limit=101", "limit=0", "page=2147483648", "limit=1.5"}) {
+    EXPECT_EQ(handle_request("/api/fencers?" + query, crow::HTTPMethod::GET).code, 400);
+  }
+  auto filtered = handle_request("/api/fencers?q=Smith&page=1&limit=1", crow::HTTPMethod::GET);
+  auto json = crow::json::load(filtered.body);
+  ASSERT_EQ(filtered.code, 200);
+  ASSERT_EQ(json["fencers"].size(), 1u);
+  EXPECT_EQ(json["fencers"][0]["id"].i(), id);
+  const auto url = "/api/fencers/" + std::to_string(id);
+  EXPECT_EQ(handle_request(url, crow::HTTPMethod::PUT, "{}").code, 400);
+  EXPECT_EQ(repo_->get(id)->first_name, "Alice");
+  const std::string body = R"({"first_name":"A","last_name":"B","birth_year":2000})";
+  EXPECT_EQ(handle_request("/api/fencers/999", crow::HTTPMethod::PUT, body).code, 404);
+  EXPECT_EQ(handle_request("/api/fencers/999", crow::HTTPMethod::DELETE).code, 404);
+}
+
+TEST_F(FencerHandlerTest, LargeRouteIdsCannotWrapToStoredIds) {
+  repo_->create({0, "Saved", "Fencer", 2000});
+  const std::string body = R"({"first_name":"A","last_name":"B","birth_year":2000})";
+  for (auto method : {crow::HTTPMethod::GET, crow::HTTPMethod::PUT, crow::HTTPMethod::DELETE})
+    for (const std::string id : {"0", "4294967297", "2147483648"})
+      EXPECT_EQ(handle_request("/api/fencers/" + id, method, body).code, 400);
+  EXPECT_EQ(repo_->get(1)->first_name, "Saved");
 }

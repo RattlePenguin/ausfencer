@@ -6,6 +6,9 @@
 
 class BaseRepo : public IRepo {
 protected:
+  // all db operations go through db mgr
+  // I'm using a shared ptr here to indicate
+  // shared ownership of a singular db mgr
   std::shared_ptr<DbManager> db_mgr_;
   std::string name_;
 

@@ -1,12 +1,27 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 project(aus-fencer VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
 
-find_package(Crow REQUIRED)
+find_package(Boost REQUIRED)
+find_package(Threads REQUIRED)
+# Crow is header-only; its installed CMake package may require standalone Asio
+# even when using the supported Boost networking backend.
+find_path(CROW_INCLUDE_DIR crow.h)
+if(NOT CROW_INCLUDE_DIR)
+  message(FATAL_ERROR "Crow headers (crow.h) are required")
+endif()
+include(cmake/crow-compat.cmake)
+add_library(ausfencer_http INTERFACE)
+target_include_directories(ausfencer_http SYSTEM INTERFACE
+  ${CROW_COMPAT_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
+target_compile_definitions(ausfencer_http INTERFACE CROW_USE_BOOST)
+target_link_libraries(ausfencer_http INTERFACE Threads::Threads)
 find_package(SQLite3 REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(ICU REQUIRED COMPONENTS uc)
@@ -40,7 +55,7 @@ target_sources(tracker_domain PRIVATE src/handlers/tracker_profiles.cpp)
 target_sources(tracker_domain PRIVATE src/handlers/workflows.cpp)
 target_link_libraries(tracker_domain PUBLIC ICU::uc)
 target_include_directories(tracker_domain PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(tracker_domain PUBLIC Crow::Crow sqlite_orm::sqlite_orm SQLite3::SQLite3 OpenSSL::Crypto)
+target_link_libraries(tracker_domain PUBLIC ausfencer_http sqlite_orm::sqlite_orm SQLite3::SQLite3 OpenSSL::Crypto)
 
 find_package(GTest QUIET)
 if(NOT GTest_FOUND)
@@ -60,15 +75,17 @@ add_executable(${PROJECT_NAME}
   src/server.cpp
   src/handlers/base.cpp
   src/handlers/fencers.cpp
+  src/handlers/bouts.cpp
   src/db/db_manager.cpp
   src/db/migrations.cpp
   src/db/repos/base.cpp
   src/db/repos/fencers.cpp
+  src/db/repos/bouts.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
   tracker_domain
-  Crow::Crow
+  ausfencer_http
   sqlite_orm::sqlite_orm
   SQLite3::SQLite3
 )

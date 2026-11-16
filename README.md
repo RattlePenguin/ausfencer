@@ -24,7 +24,7 @@ remain later milestones.
 
 ## Installation
 
-Install a C++17 compiler, CMake, Crow (including its Asio dependency), SQLite3,
+Install a C++17 compiler, CMake 3.16+, Crow headers, Boost, SQLite3,
 OpenSSL and ICU development packages. CMake fetches the pinned sqlite_orm revision;
 it uses installed GoogleTest when available, otherwise fetches the pinned revision.
 The bundled SQLite sources in `libs/` are retained, but targets link SQLite3
@@ -55,3 +55,21 @@ checksum. Keep generated databases under ignored `build/`.
 See the [fictional dataset guide](fixtures/README.md) for fixture totals, local
 account provisioning and explicit demo reset.
 See the [API guide](docs/API.md) for read routes and protected workflow examples.
+
+## Practice bouts
+
+Separate operator-only practice CRUD is available at `/api/practice-bouts`.
+Set `AUSFENCER_ADMIN_TOKEN` when starting the server and send
+`Authorization: Bearer TOKEN` on every practice request, including reads.
+An unset token disables access. Legacy fencer writes use the same token.
+Practice bouts do not contribute to competition statistics or event results.
+See the [practice API contract](docs/api-contract.md) for payloads and examples.
+
+Schema version 6 adds `practice_bouts` without changing competition `bouts`.
+Old standalone databases from `bout/crud` are unsupported; use a fresh disposable
+database for that branch's demo data. Existing tracker databases upgrade in place.
+Explicit demo reset also clears practice bouts before recreating fixture data.
+
+Crow uses its Boost backend. A narrow constructor compatibility patch is applied
+to a build-local header copy, never to installed headers. Python 3.7+ enables the
+production HTTP smoke test, which needs port 8080 available.

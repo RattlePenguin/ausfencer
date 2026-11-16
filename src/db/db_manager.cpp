@@ -10,8 +10,11 @@ DbManager::DbManager(const std::string &db_name)
   query("PRAGMA busy_timeout = 5000");
   // Keep legacy records while adding versioned domain tables separately.
   check_tracker_schema(*this);
-  storage_.sync_schema(true);
   migrate_tracker(*this);
+  storage_.transaction([this] {
+    storage_.sync_schema(true);
+    return true;
+  });
 }
 
 DbRows DbManager::query(const std::string &statement,
