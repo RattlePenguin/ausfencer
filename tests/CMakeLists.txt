@@ -29,11 +29,10 @@ target_include_directories(ausfencer_tests PRIVATE
 
 target_link_libraries(ausfencer_tests PRIVATE
   tracker_domain
-  gtest
-  gtest_main
+  ${AUSFENCER_GTEST_TARGET}
   ausfencer_http
   sqlite_orm::sqlite_orm
-  SQLite3::SQLite3
+  ${AUSFENCER_SQLITE_TARGET}
 )
 
 gtest_discover_tests(ausfencer_tests)

@@ -8,7 +8,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
 
-find_package(Boost REQUIRED)
+find_package(Boost CONFIG QUIET)
+if(NOT Boost_FOUND)
+  find_package(Boost REQUIRED)
+endif()
 find_package(Threads REQUIRED)
 # Crow is header-only; its installed CMake package may require standalone Asio
 # even when using the supported Boost networking backend.
@@ -23,6 +26,11 @@ target_include_directories(ausfencer_http SYSTEM INTERFACE
 target_compile_definitions(ausfencer_http INTERFACE CROW_USE_BOOST)
 target_link_libraries(ausfencer_http INTERFACE Threads::Threads)
 find_package(SQLite3 REQUIRED)
+if(TARGET SQLite3::SQLite3)
+  set(AUSFENCER_SQLITE_TARGET SQLite3::SQLite3)
+else()
+  set(AUSFENCER_SQLITE_TARGET SQLite::SQLite3)
+endif()
 find_package(OpenSSL REQUIRED)
 find_package(ICU REQUIRED COMPONENTS uc)
 
@@ -32,6 +40,15 @@ FetchContent_Declare(
   GIT_TAG        5f1a2ce84a3d72711b4f0a440fdaba977868ae67
 )
 FetchContent_MakeAvailable(sqlite_orm)
+# Treat sqlite_orm as system headers, like Crow.
+target_include_directories(sqlite_orm SYSTEM INTERFACE
+  "$<BUILD_INTERFACE:${sqlite_orm_SOURCE_DIR}/include>")
+# The pinned sqlite_orm uses the target name deprecated in CMake 4.3.
+if(TARGET SQLite3::SQLite3)
+  get_target_property(sqlite_orm_links sqlite_orm INTERFACE_LINK_LIBRARIES)
+  list(TRANSFORM sqlite_orm_links REPLACE "^SQLite::SQLite3$" "SQLite3::SQLite3")
+  set_property(TARGET sqlite_orm PROPERTY INTERFACE_LINK_LIBRARIES "${sqlite_orm_links}")
+endif()
 
 add_library(tracker_domain src/services/fixtures.cpp)
 target_sources(tracker_domain PRIVATE src/services/fixture_validation.cpp)
@@ -55,19 +72,21 @@ target_sources(tracker_domain PRIVATE src/handlers/tracker_profiles.cpp)
 target_sources(tracker_domain PRIVATE src/handlers/workflows.cpp)
 target_link_libraries(tracker_domain PUBLIC ICU::uc)
 target_include_directories(tracker_domain PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(tracker_domain PUBLIC ausfencer_http sqlite_orm::sqlite_orm SQLite3::SQLite3 OpenSSL::Crypto)
+target_link_libraries(tracker_domain PUBLIC ausfencer_http sqlite_orm::sqlite_orm ${AUSFENCER_SQLITE_TARGET} OpenSSL::Crypto)
 
 find_package(GTest QUIET)
-if(NOT GTest_FOUND)
-FetchContent_Declare(
-  gtest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        063de7e9578f82b369302001269680b4b1553359
-)
-FetchContent_MakeAvailable(gtest)
+if(TARGET GTest::gtest)
+  set(AUSFENCER_GTEST_TARGET GTest::gtest)
+elseif(TARGET GTest::GTest)
+  set(AUSFENCER_GTEST_TARGET GTest::GTest)
 else()
-  add_library(gtest ALIAS GTest::gtest)
-  add_library(gtest_main ALIAS GTest::gtest_main)
+  FetchContent_Declare(
+    gtest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG        063de7e9578f82b369302001269680b4b1553359
+  )
+  FetchContent_MakeAvailable(gtest)
+  set(AUSFENCER_GTEST_TARGET gtest)
 endif()
 
 add_executable(${PROJECT_NAME}
@@ -87,7 +106,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   tracker_domain
   ausfencer_http
   sqlite_orm::sqlite_orm
-  SQLite3::SQLite3
+  ${AUSFENCER_SQLITE_TARGET}
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
