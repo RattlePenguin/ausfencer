@@ -24,17 +24,57 @@ remain later milestones.
 
 ## Installation
 
-Install a C++17 compiler, CMake 3.16+, Crow headers, Boost, SQLite3,
-OpenSSL and ICU development packages. CMake fetches the pinned sqlite_orm revision;
-it uses installed GoogleTest when available, otherwise fetches the pinned revision.
-The bundled SQLite sources in `libs/` are retained, but targets link SQLite3
-discovered by CMake.
+Install Git, a C++17 compiler and build tool, CMake 3.16+, and the Boost,
+SQLite3, OpenSSL and ICU development packages. Install Python 3.7+ to include
+the live HTTP smoke test. Use a browser for the tracker walkthrough. The
+frontend runs without Node.js or npm.
+
+**CachyOS or Arch Linux** ([Arch package database](https://archlinux.org/packages/))
 
 ```sh
-cmake -S . -B build
-cmake --build build -j 2
-ctest --test-dir build --output-on-failure
+sudo pacman -Syu --needed base-devel git cmake boost sqlite openssl icu python
 ```
+
+**Ubuntu or Debian**, including Ubuntu under [Windows Subsystem for Linux](https://learn.microsoft.com/windows/wsl/install/) ([Ubuntu package database](https://packages.ubuntu.com/))
+
+```sh
+sudo apt update
+sudo apt install build-essential git cmake libboost-dev libsqlite3-dev libssl-dev libicu-dev python3
+```
+
+**macOS with [Homebrew](https://brew.sh/)**
+
+```sh
+xcode-select --install
+brew install git cmake boost sqlite openssl@3 icu4c@79 python
+```
+
+Run `xcode-select --install` only if the Command Line Tools are missing. Before
+configuring on macOS, tell CMake where Homebrew installed the libraries.
+
+```sh
+export CMAKE_PREFIX_PATH="$(brew --prefix boost):$(brew --prefix sqlite):$(brew --prefix openssl@3):$(brew --prefix icu4c@79)"
+```
+
+Run these commands from the repository root. Fetch the full Crow header tree
+on the first setup. `CROW_INCLUDE_DIR` must contain `crow.h` and the `crow/`
+subdirectory so the build can make its compatibility copy.
+[Crow release](https://github.com/CrowCpp/Crow/releases/tag/v1.3.4)
+
+```sh
+mkdir -p build/deps
+git clone --depth 1 --branch v1.3.4 https://github.com/CrowCpp/Crow.git build/deps/crow
+cmake -S . -B build -DCROW_INCLUDE_DIR="$PWD/build/deps/crow/include"
+cmake --build build --parallel 2
+(cd build && ctest --output-on-failure)
+```
+
+If you already have Crow headers installed in a standard include directory,
+you can configure with `cmake -S . -B build` on a fresh build directory. CMake
+fetches the pinned sqlite_orm revision and fetches pinned GoogleTest if it
+cannot find an installed copy. Allow GitHub access for the first configuration.
+The build links the SQLite3 library found by CMake. Run CTest before starting
+the demo server so `ProductionHttpSmoke` can bind to port 8080.
 
 ## Usage
 
