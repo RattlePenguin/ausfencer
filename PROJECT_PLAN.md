@@ -2,7 +2,7 @@
 
 Draft dated 22 October 2026, updated with the owner's decisions on dummy-data development, eventual real-data coverage, community contributions and profile visibility. Based on the original source review, the product direction discussed with the project owner, and the linked research below. Recommendations are provisional where a question remains unanswered. Sections 1–12 retain the planning baseline; delivered work and remaining checks are recorded in the implementation checkpoint below.
 
-**Implementation checkpoint — 22 October 2026**
+**Implementation checkpoint — after the practice-bout merge**
 
 | Milestone | Current status | Delivered / remaining |
 | --- | --- | --- |
@@ -10,6 +10,7 @@ Draft dated 22 October 2026, updated with the owner's decisions on dummy-data de
 | M1 | In progress | Versioned SQLite migrations preserve legacy records; profiles, aliases, issuer-scoped IDs, events/entries, bouts, provenance, protected writes, demo accounts, reviewed claims and visibility are implemented. Google/email-link verification and production account-age/consent onboarding remain unfinished |
 | M2 | In progress | Transactional previews/approved imports, repeat/matrix/community deduplication, receipts, conflict queues, score/participant corrections, rejection and revision recovery are implemented. New community competition creation, participant confirmations and broader alias/external-ID/merge/split administration remain unfinished |
 | M3 | In progress | Vanilla responsive frontend, Unicode full-name/alias search, distinguishable duplicate names, profiles, bout/event views, poule matrices/rankings/tableau/placings, annual/lifetime statistics, filters, claim/guardian/opt-out controls and moderation screens are implemented. Live browser/device acceptance and assisted guardian handover remain outstanding |
+| M4 | Pending | Tester acceptance, demo deployment, service checks and backup/restore rehearsal |
 
 See [the fixture specification and run instructions](fixtures/README.md) and
 [the API guide](docs/API.md). The server binds to loopback by default and inserts
@@ -24,25 +25,84 @@ consistent bracket advancement. Hidden names, aliases, source-listed names and
 profile links are redacted across tracker and legacy public routes, including
 after reimports and changed source identifiers. Shared numeric results remain.
 
-Validation: the C++ build and all 53 GoogleTest cases pass. JavaScript modules
-pass `node --check`. AddressSanitizer/UndefinedBehaviorSanitizer also pass the
-53 cases with `ASAN_OPTIONS=detect_leaks=0`; LeakSanitizer cannot run under this
-environment's ptrace restriction. A listening-server/browser check could not be
-completed here: socket creation returns `Operation not permitted`, and a separate
-headless Firefox attempt crashes. In-process HTTP journeys are tested; visual,
-mobile and real-browser behavior still need verification in a suitable environment.
+The practice API is merged. Schema version 6 adds `practice_bouts` for
+operator-only CRUD, separate from competition `bouts`. The November 16 integration
+run passed 92 tests, including the live practice API and schema upgrade. The
+CachyOS setup was rechecked with CMake 4.5.0 and Crow v1.3.4. All 92 tests passed,
+and a seeded server returned both Mira Vale profiles and the expected 2026 totals.
+Seeded tracker journeys in a real browser still need acceptance.
+[Integration status](docs/implementation-status.md) · [Practice API](docs/api-contract.md)
 
-Next implementation steps, following the same reviewed ≤100-line commit cycle:
+## Implementation queue
 
-1. Configure and implement Google/email-link verification and account onboarding;
-   local demo sessions currently let testers exercise protected flows.
-2. Add community competition creation, participant confirmation and the remaining
-   identity administration flows; retain audited, reversible decisions.
-3. Run actual browser/mobile journeys and fix findings, including guardian
-   handover and privacy behavior. Then continue M4 acceptance/recovery checks.
+Work through these tasks in order within each milestone. The browser baseline
+can use the existing demo sessions while sign-in is being built. Each row has
+its own acceptance check and may take several reviewed commits under the
+[implementation workflow](#implementation-workflow-all-milestones).
 
-M1–M3 are deliberately not marked complete. No real-result acquisition, provider
-adapter, real-data permissions work, tournament hosting or referee app was started.
+### Baseline and M3 browser review
+
+| Task | Instructions | Done when |
+| --- | --- | --- |
+| Build on the new device | Follow [Installation](README.md#installation) and run CTest with port 8080 free before starting the demo server. | Both targets build and the suite includes a passing `ProductionHttpSmoke`. |
+| Seed and check the public journey | Follow [Usage](README.md#usage). In a desktop browser and at a narrow mobile width, search `Mira Vale`, distinguish the two results by affiliation, and open profile 101, a bout, and the 2026 épée event. Check keyboard navigation and narrow-screen table scrolling. | Profile 101 shows 7–1 and 67–45 touches for 2026 épée, and the pool matrix and bracket agree with the fixture guide. |
+| Check contribution and moderation | Issue separate member and moderator demo tokens as in the [fixture guide](fixtures/README.md). Submit a result, retry it with the same operation ID, report it, and resolve the report as the moderator. | The member sees one receipt, the moderator sees one review item, and both opponents' statistics reflect the resolution. |
+| Check claims and privacy | Use a member to claim a fictional profile and a moderator to approve it. Hide it, repeat the approved fixture import, and check search, direct profile page, opponent history, event and bout views while signed out. | The profile stays out of search, its API returns 404, the page shows no profile data, and shared records show `Private fencer` while keeping numeric results. |
+
+### M1 accounts and M3 guardian handover
+
+| Task | Instructions | Done when |
+| --- | --- | --- |
+| Define the account session contract | Review `AccountRepo` and the existing `accounts`, `signins`, and `sessions` tables. Document how a verified provider identity maps to an account, how sessions expire, and how explicit account linking works. | The contract covers repeat sign-in, logout, provider collisions and users without a fencer profile. |
+| Add Google sign-in on the server | Configure a development Google client and callback. Validate the provider response server-side and use the verified subject to resolve an account and issue an app session. Start with tests using provider fixtures. | Returning subjects resolve to the same account. Invalid responses create neither accounts nor sessions. |
+| Wire Google sign-in into the account page | Connect the account page to the configured flow and handle completion, cancellation, errors and logout. | A tester can sign in, open `/api/account` through the UI, and sign out. |
+| Issue email sign-in links | Configure a test mailbox and add a rate-limited request action. Store token hashes with an expiry and send the links to the requested addresses. | A test address receives a link. Requests return the same response for known and unknown addresses. |
+| Redeem email sign-in links | Add an action that consumes a valid token and issues an account session in one transaction. Connect the request form and redemption view to the two actions. | A valid link opens an account session once. Expired and reused links fail. |
+| Add consent onboarding | Confirm the junior policy in section 3. Record the agreed age band and consent version/date privately, and apply the server-side onboarding rules to self and guardian journeys. | Self-service and guardian paths follow the agreed policy, and public API responses omit onboarding details. |
+| Add reviewed guardian handover | Add a request and moderator decision using the existing claim/grant model. Record the decision and replace or revoke the relevant grant atomically. | Tests cover approval, rejection and withdrawal. A successful handover transfers management while preserving the profile's visibility settings. |
+| Wire the handover screens | Add request and status views to the account page and decision controls to the moderator page. | A tester can request handover and see the recorded decision from the account page. |
+
+### M2 community results and identity
+
+| Task | Instructions | Done when |
+| --- | --- | --- |
+| Create a community competition | Define the minimum tournament/event input using the existing event fields. Add a signed-in action that validates inputs, records provenance and returns a receipt. Use stable operation IDs for retries. | A valid request creates one event, a retry returns the same receipt, and a likely duplicate goes to review. |
+| Add community event entries | Add a signed-in action to enter resolved fencer IDs in a contributed event. Check event permissions and send ambiguous matches for review. | Two resolved fencers can be entered, repeat requests create no duplicates, and an ambiguous identity stays in review. |
+| Connect the competition contribution forms | Build the event creation and entry forms, then reuse the existing result submission action. | A member creates a fictional event, enters two fencers and submits a bout visible from both profiles. |
+| Record participant confirmations | Tie confirmations to the currently accepted result revision. Require an approved self claim for each side and use the existing confirmation records where suitable. | Each side can confirm once, and a corrected result requires fresh confirmations. |
+| Display participant confirmation | Show pending confirmation in account receipts and the confirmed label in public results. | The public label appears after both sides confirm the current revision. |
+| Add audited alias review | Add a moderator action for alias changes and verify public search and reimport after an edit. | Search finds the edited alias when the profile is public. Suppressed profiles stay hidden after reimport. |
+| Add audited external-ID review | Add a moderator action for issuer-scoped IDs and verify the import lookup after an edit. | Conflicts go to review and an approved ID resolves to the intended canonical profile. |
+| Add identity merge preview | List the affected entries, bouts, aliases, source identifiers and privacy state. Flag collisions and require an explicit resolution before applying changes. | A moderator can inspect the full proposed change without writes. Tests cover a merge that would create a self-bout or duplicate entry. |
+| Apply an approved merge | Apply the reviewed mapping transactionally and record the before and after references in the audit trail. | The merged histories have correct totals and retain provenance and suppression. |
+| Reverse a recorded merge | Use the audit record to preview and restore the previous associations. Send subsequent conflicting edits to review. | A merge followed by reversal restores both fixture histories and their visibility. |
+| Split a conflated identity | Let a moderator preview an explicitly selected set of entries, bouts and identifiers to move to a separate profile, then apply the approved split transactionally. | Both profiles show the intended histories, with consistent opponent views, source links and suppression. |
+
+### M4 acceptance with fictional data
+
+1. Repeat the browser checks with both new sign-in methods and the end-to-end competition, confirmation and guardian flows. Record device/browser and results. Give each fix its own reproduction and acceptance check.
+2. Deploy a demo against a dedicated seeded database. Verify the home page and a public API request, and record who owns deployment, moderation and service checks.
+3. Back up the demo database, restore it to a separate path and bring up the restored copy. Verify known profile totals, a recorded correction and a hidden profile. Document the commands used.
+4. Ask testers to complete the public, member and moderator journeys. Close the blocking findings and record their acceptance before starting M5.
+
+### Later milestones
+
+Finish M4 before starting M5. The order of M6 and M7 is still open. Break each
+task into implementation commits when the required sample or ruleset is available.
+
+| Task | Instructions | Done when |
+| --- | --- | --- |
+| M5 select a real sample | Establish a permitted acquisition route for one completed AFF event and document the fields and coverage it provides. | The reviewed sample and its permitted uses are recorded. |
+| M5 validate a source adapter | Map the sample into the existing preview/import flow and review identity matches, coverage and totals in a separate real-data database. | Reimporting the approved sample preserves canonical results and corrections. |
+| M5 plan backfill | Order eligible events newest first and document how to refresh corrected results. | The order and coverage gaps are recorded before adding further events. |
+| M6 choose the hosting format | Confirm one club partner, one individual format, the ruleset version and the plan for a venue outage. | The club approves a replay fixture and recovery procedure. |
+| M6 check in entrants | Implement entry import and check-in against the chosen format. | The reviewed entry list can be reproduced from the fixture. |
+| M6 score pools | Implement pool allocation, bout order, score entry and ranking in that order. | Replay produces the expected poules and post-poule ranks. |
+| M6 advance the bracket | Seed elimination from the pool ranks, enter results and derive placings. | Replay produces the expected bracket and placings. |
+| M6 publish and pilot | Add the required referee/piste assignments, spectator view and results export in separate increments. Rehearse recovery before running the event with the club. | The supervised pilot publishes the expected results and can recover from an interrupted session. |
+| M7 score a practice bout | Implement a local timer and score controls on a phone. Add card controls and undo as the next increment. | A tester can complete a bout and correct an input on a phone. |
+| M7 recover and submit a practice bout | Persist the in-progress bout locally. Then add explicit submission and define how retries resolve to the same saved bout. | Real-device tests recover a bout after interruption and save one practice record after retry. |
+| M8 choose one expansion | Pick one provider, country or format. Identify its owner, document the source or rules and agree on representative fixtures before implementation. | The owner approves the acceptance checks for that addition. |
 
 **1. Product outcome and priorities**
 
@@ -204,7 +264,7 @@ M0–M4 deliver and validate the working player tracker with dummy data. M5 intr
 
 Keep the existing C++ API and repository structure. Add domain/statistics/import services where business logic needs to be shared; HTTP handlers should translate requests and repositories should handle persistence. Import jobs should run outside interactive request handling, through controlled application interfaces rather than unmanaged writes to a live SQLite file. Keep SQLite initially and assess a database change only against measured write concurrency and operational requirements. Choose the frontend stack when M3 is scoped.
 
-**Implementation workflow (all milestones)**
+### Implementation workflow (all milestones)
 
 Break each milestone into small steps, each covering one reasonable implementation chunk. For example, implementing the Bout handler's create function is one step; its read, update and delete functions are separate steps. Include the supporting declarations and relevant tests within the same chunk where practical.
 
