@@ -337,6 +337,10 @@ Prioritise trust and coverage first, then season recaps and rivalry timelines, t
 
 Confirmed owner decisions: finish the app with dummy data first, using the supplied AFF pages as structural references; defer real-data collection and documentation for its use until the app is working. Eventual real coverage starts with AFF competitions, newest completed 2026 events backwards through 2025 and earlier. Broad community contributions to an unofficial tracker, publicly searchable profiles with an opt-out, and account sign-in including Google remain the intended behavior. The owner permits a simple guardian-supervised approach if needed. The specific age split, junior publication flow, confirmation labels and moderation mechanics above are recommendations, not additional decisions already made by the owner.
 
-**12. First implementation slice**
+**12. Original implementation slice (delivered)**
 
-Start with two fictional fencers, a fictional event and one bout: persist them; retrieve the bout from either profile; calculate each perspective's totals; attach synthetic provenance; import the same fixture observation twice without duplicating it; and correct the score with an audit record. Grow this into the complete AFF-style dummy event specified in section 3, including entrant lists, poule matrices, rankings, a completed tableau and final placings. Follow with two competitors who share a name and a second event in another year that uses an alias. Then let a signed-in tester submit a fictional missing result, exercise the dispute flow, and hide a claimed dummy profile across all public views. Complete and verify the app journeys through M4 before obtaining real event records or implementing a real provider adapter.
+The first slice covered two fictional fencers, one event and one bout, with
+both opponent perspectives, synthetic provenance, repeat imports and audited
+corrections. The demo now includes the full fictional event, duplicate names,
+an alias in a second season, and demo-session workflows for missing results,
+disputes and opt-out. Continue with the [implementation queue](#implementation-queue).
